@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 from dataclasses import asdict
 from datetime import datetime, timezone
@@ -48,6 +49,18 @@ def write_slice_result(
     out_dir = slice_output_dir(output_root, task)
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # Handle assets and prepare final markdown
+    asset_mode = "copy" if copy_assets else "reuse_phase2"
+    if copy_assets and task.assets_dir.exists():
+        dest_assets = out_dir / "assets"
+        if dest_assets.exists():
+            shutil.rmtree(dest_assets)
+        shutil.copytree(task.assets_dir, dest_assets)
+
+    if not copy_assets:
+        # Rewrite image paths to point to Phase 2 assets directory
+        final_markdown = rewrite_asset_paths(final_markdown, task.assets_dir, out_dir)
+
     # Write final .md
     md_filename = task.draft_md_file.name
     md_path = out_dir / md_filename
@@ -59,14 +72,6 @@ def write_slice_result(
         json.dumps(asdict(review_report), ensure_ascii=False, indent=2, default=str),
         encoding="utf-8",
     )
-
-    # Handle assets
-    asset_mode = "copy" if copy_assets else "reuse_phase2"
-    if copy_assets and task.assets_dir.exists():
-        dest_assets = out_dir / "assets"
-        if dest_assets.exists():
-            shutil.rmtree(dest_assets)
-        shutil.copytree(task.assets_dir, dest_assets)
 
     rel_md = str(md_path.relative_to(output_root))
     rel_report = str(report_path.relative_to(output_root))
@@ -175,6 +180,46 @@ def write_format_manifest(
         encoding="utf-8",
     )
     return manifest
+
+
+def rewrite_asset_paths(markdown: str, phase2_assets_dir: Path, output_dir: Path) -> str:
+    """Rewrite asset paths in Markdown to point to Phase 2 assets directory.
+
+    Used when ``--copy-assets=false`` to make image references resolve
+    to the original Phase 2 asset location via a relative path.
+    """
+    if not phase2_assets_dir.exists():
+        return markdown
+
+    # Compute relative path from output_dir to phase2_assets_dir
+    try:
+        rel_path = Path("..") / phase2_assets_dir.relative_to(phase2_assets_dir.parents[1])
+    except ValueError:
+        # Fallback: use absolute path
+        rel_path = phase2_assets_dir
+
+    rel_str = str(rel_path).replace("\\", "/")
+
+    # Replace Markdown image references: ![...](assets/...) -> ![...](rel_path/...)
+    def _replace_image(m: re.Match) -> str:
+        prefix = m.group(1)
+        asset_ref = m.group(2)
+        return f"{prefix}({rel_str}/{asset_ref})"
+
+    markdown = re.sub(
+        r"(!\[[^\]]*\])\(assets/([^)]+)\)",
+        _replace_image,
+        markdown,
+    )
+
+    # Replace HTML img src references
+    markdown = re.sub(
+        r'(src=["\'])assets/([^"\']+)',
+        lambda m: f"{m.group(1)}{rel_str}/{m.group(2)}",
+        markdown,
+    )
+
+    return markdown
 
 
 def _safe_dirname(title: str) -> str:

@@ -101,3 +101,124 @@ def create_phase2_manifest(tmp_path, create_pdf):
         return manifest_path
 
     return factory
+
+
+@pytest.fixture
+def create_phase2_output(tmp_path):
+    """Create a minimal Phase 2 output directory with extract_manifest.json,
+    content.json, draft .md, and assets/ for each slice."""
+
+    def factory(
+        name: str,
+        slice_specs: list[dict],
+        *,
+        source_file: str | None = None,
+    ) -> Path:
+        extract_dir = tmp_path / f"{name}_extract"
+        extract_dir.mkdir()
+
+        manifest = {
+            "source_manifest": "manifest.json",
+            "source_file": source_file or f"{name}.pdf",
+            "created_at": "2026-03-21T10:00:00Z",
+            "generator_version": "phase2-v1",
+            "scope": "digital-pdf-only",
+            "total_slices": len(slice_specs),
+            "success_count": 0,
+            "failed_count": 0,
+            "total_warnings": 0,
+            "total_elapsed_ms": 100,
+            "slices": [],
+        }
+
+        for index, spec in enumerate(slice_specs):
+            slice_file = spec.get("slice_file", f"slice-{index + 1}.pdf")
+            display_title = spec.get("display_title", f"Slice {index + 1}")
+            status = spec.get("status", "success")
+            dir_name = f"{index + 1:03d}-{display_title}"
+            slice_dir = extract_dir / dir_name
+
+            if status == "success":
+                manifest["success_count"] += 1
+                slice_dir.mkdir(parents=True)
+                (slice_dir / "assets").mkdir()
+
+                content = {
+                    "slice_file": slice_file,
+                    "display_title": display_title,
+                    "start_page": spec.get("start_page", index + 1),
+                    "end_page": spec.get("end_page", index + 1),
+                    "source_pages": spec.get("source_pages", [
+                        {
+                            "slice_page": 1,
+                            "source_page": spec.get("start_page", index + 1),
+                            "is_overlap": False,
+                            "markdown": spec.get("markdown", f"# {display_title}\n\nBody text."),
+                            "blocks": spec.get("blocks", [
+                                {
+                                    "type": "heading",
+                                    "text": display_title,
+                                    "source_page": spec.get("start_page", index + 1),
+                                    "bbox": [50, 40, 500, 70],
+                                    "reading_order": 0,
+                                    "is_overlap": False,
+                                    "dedupe_key": f"{spec.get('start_page', index + 1)}:abc:def",
+                                },
+                                {
+                                    "type": "paragraph",
+                                    "text": "Body text.",
+                                    "source_page": spec.get("start_page", index + 1),
+                                    "bbox": [50, 80, 500, 110],
+                                    "reading_order": 1,
+                                    "is_overlap": False,
+                                    "dedupe_key": f"{spec.get('start_page', index + 1)}:ghi:jkl",
+                                },
+                            ]),
+                            "tables": spec.get("tables", []),
+                            "images": spec.get("images", []),
+                        }
+                    ]),
+                    "assets": [],
+                    "stats": {"char_count": 50, "table_count": 0, "image_count": 0},
+                    "warnings": [],
+                    "manual_review_required": spec.get("manual_review_required", False),
+                }
+                content_path = slice_dir / "content.json"
+                content_path.write_text(json.dumps(content, ensure_ascii=False, indent=2), encoding="utf-8")
+
+                md_content = spec.get("markdown", f"# {display_title}\n\nBody text.")
+                md_path = slice_dir / slice_file.replace(".pdf", ".md")
+                md_path.write_text(md_content, encoding="utf-8")
+
+                manifest["slices"].append({
+                    "slice_file": slice_file,
+                    "content_file": f"{dir_name}/content.json",
+                    "md_file": f"{dir_name}/{md_path.name}",
+                    "status": "success",
+                    "warning_count": 0,
+                    "manual_review_required": spec.get("manual_review_required", False),
+                    "elapsed_ms": 100,
+                    "error_code": None,
+                    "error_message": None,
+                    "stage_timings": {},
+                })
+            else:
+                manifest["failed_count"] += 1
+                manifest["slices"].append({
+                    "slice_file": slice_file,
+                    "content_file": None,
+                    "md_file": None,
+                    "status": "failed",
+                    "warning_count": 0,
+                    "manual_review_required": False,
+                    "elapsed_ms": 10,
+                    "error_code": "unsupported_input",
+                    "error_message": "test failure",
+                    "stage_timings": {},
+                })
+
+        manifest_path = extract_dir / "extract_manifest.json"
+        manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+        return extract_dir
+
+    return factory

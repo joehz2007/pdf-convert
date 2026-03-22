@@ -17,9 +17,14 @@ from .contracts import (
     NormalizedDocument,
     ReviewReport,
 )
+from .block_aligner import align_blocks
 from .coverage_auditor import audit_coverage
 from .errors import MdFormatError
 from .manifest_loader import load_extract_manifest
+from .md_normalizer import normalize_markdown
+from .postcheck import postcheck
+from .renderer import render
+from .repair_engine import repair
 from .writer import (
     build_failure_result,
     build_skipped_result,
@@ -205,8 +210,8 @@ def _process_all_slices(
 def _process_slice(task: FormatTask) -> SliceProcessOutcome:
     """Process a single slice through the Phase 3 pipeline.
 
-    Stages: coverage audit → repair (placeholder) → render (placeholder)
-    → postcheck (placeholder) → build review report.
+    Stages: coverage audit → repair → render → normalize → postcheck
+    → build review report.
     """
     stage_timings = new_stage_timings()
     try:
@@ -215,24 +220,56 @@ def _process_slice(task: FormatTask) -> SliceProcessOutcome:
         content_data = json.loads(task.content_file.read_text(encoding="utf-8"))
         draft_markdown = task.draft_md_file.read_text(encoding="utf-8")
         audit_result = audit_coverage(content_data, draft_markdown)
+        alignment = align_blocks(content_data, draft_markdown)
         stage_timings["coverage_audit_ms"] = elapsed_ms_since(audit_start)
 
-        # --- Stage: repair (placeholder — M3 will implement) ---
+        # --- Stage: repair ---
         repair_start = perf_counter()
-        final_markdown = draft_markdown
+        normalized_doc, auto_fixes = repair(
+            task, content_data, draft_markdown, audit_result, alignment,
+        )
         stage_timings["repair_ms"] = elapsed_ms_since(repair_start)
 
-        # --- Stage: render (placeholder — M3 will implement) ---
+        # --- Stage: render ---
         render_start = perf_counter()
+        rendered_markdown, render_stats = render(normalized_doc)
         stage_timings["render_ms"] = elapsed_ms_since(render_start)
 
-        # --- Stage: postcheck (placeholder — M3 will implement) ---
+        # --- Stage: normalize + postcheck ---
         postcheck_start = perf_counter()
+        normalized_markdown = normalize_markdown(rendered_markdown)
+
+        # Collect asset paths for postcheck
+        asset_paths = []
+        for page in content_data.get("source_pages", []):
+            for img in page.get("images", []):
+                ap = img.get("asset_path", "")
+                if ap:
+                    asset_paths.append(ap)
+
+        pc_result = postcheck(rendered_markdown, normalized_markdown, asset_paths=asset_paths)
         stage_timings["postcheck_ms"] = elapsed_ms_since(postcheck_start)
 
+        # If postcheck failed, fall back to rendered (pre-normalize) version
+        if not pc_result.passed:
+            LOGGER.warning(
+                "Postcheck failed for slice=%s, using pre-normalization markdown",
+                task.slice_file,
+            )
+            final_markdown = rendered_markdown
+        else:
+            final_markdown = normalized_markdown
+
+        # Combine all issues
+        all_issues = list(audit_result.issues) + list(pc_result.issues)
+
         # Determine manual review
-        has_errors = any(i.severity == "error" for i in audit_result.issues)
-        manual_review = task.phase2_manual_review_required or has_errors
+        has_errors = any(i.severity == "error" for i in all_issues)
+        manual_review = (
+            task.phase2_manual_review_required
+            or normalized_doc.phase3_manual_review_required
+            or has_errors
+        )
 
         # Build review report
         report = ReviewReport(
@@ -243,13 +280,14 @@ def _process_slice(task: FormatTask) -> SliceProcessOutcome:
             manual_review_required=manual_review,
             coverage=audit_result.coverage,
             formatted_stats={
-                "char_count": len(final_markdown),
-                "block_count": audit_result.coverage.text_blocks_expected,
-                "table_count": audit_result.coverage.tables_expected,
-                "image_count": audit_result.coverage.images_expected,
+                "char_count": render_stats.char_count,
+                "block_count": render_stats.block_count,
+                "table_count": render_stats.table_count,
+                "image_count": render_stats.image_count,
             },
-            issues=audit_result.issues,
-            warnings=[i.message for i in audit_result.issues if i.severity == "warning"],
+            issues=all_issues,
+            auto_fixes=auto_fixes,
+            warnings=[i.message for i in all_issues if i.severity == "warning"],
         )
 
         finalize_stage_timings(stage_timings)

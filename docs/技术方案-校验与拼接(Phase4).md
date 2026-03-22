@@ -308,8 +308,35 @@ class MergeResult:
     total_slices: int
     merged_slices: int
     removed_overlap_blocks: int
+    warning_count: int
     manual_review_required: bool
+    warnings: list["MergeWarning"]
     elapsed_ms: int
+```
+
+### 6.5 告警模型
+
+为避免 Phase 4 继续使用自由文本 warning，建议引入结构化告警模型，便于 CI、质量报告或后续自动化管线按类型聚合。
+
+```python
+from dataclasses import dataclass
+from typing import Literal
+
+@dataclass
+class MergeWarning:
+    warning_type: Literal[
+        "overlap_match_unstable",
+        "overlap_no_provenance",
+        "asset_copy_failed",
+        "asset_path_missing",
+        "page_gap_detected",
+        "slice_missing",
+        "upstream_manual_review_inherited",
+        "consecutive_duplicate_detected",
+        "heading_count_mismatch",
+    ]
+    slice_file: str | None
+    message: str
 ```
 
 ---
@@ -370,6 +397,7 @@ python phase4_merge.py ^
 参数约定：
 
 - `--copy-assets=true` 默认开启，生成自包含交付物
+- `--overwrite=true` 时，若输出目录已存在则允许清空后重建；否则直接报错退出，避免覆盖已有交付结果
 - `--fail-on-manual-review=true` 时，只要任一章节或最终合并结果需要人工复核，就返回非 0 退出码
 - `--allow-upstream-manual-review=true` 时，可在保留风险标记的前提下继续合并
 
@@ -378,7 +406,9 @@ python phase4_merge.py ^
 负责集中定义配置常量，建议至少包括：
 
 - `DEFAULT_COPY_ASSETS`
+- `DEFAULT_OVERWRITE`
 - `DEFAULT_FAIL_ON_MANUAL_REVIEW`
+- `DEFAULT_ALLOW_UPSTREAM_MANUAL_REVIEW`
 - `OVERLAP_COMPARE_MAX_BLOCKS`
 - `MAX_HEADING_LEVEL`
 - `MERGE_SEPARATOR_STYLE`
@@ -484,7 +514,7 @@ python phase4_merge.py ^
 
 - `![alt](assets/foo.png)` → `![alt](assets/001-第一章-系统概述/foo.png)`
 - HTML `<img>` 标签中的 `src` 也必须同步改写
-- `review_report.json` 中记录改写前后路径映射
+- `merge_report.json` 中记录改写前后路径映射，建议单独落在 `asset_relinks` 数组中
 
 ### 7.7 `src/md_merge/stitcher.py`
 
@@ -533,6 +563,48 @@ python phase4_merge.py ^
 - 写 `merge_report.json`
 - 写 `merge_manifest.json`
 - 复制资源目录
+
+### 7.10 `src/md_merge/pipeline.py`
+
+负责串联所有模块，是 Phase 4 的顶层编排函数所在位置。
+
+#### 建议函数签名
+
+```python
+def run_merge(task_list: list[MergeTask], config: MergeConfig) -> MergeResult:
+    ...
+```
+
+#### 调用顺序
+
+1. `manifest_loader` 校验输入与任务顺序
+2. `provenance_loader` 加载 overlap 去重所需追溯信息
+3. `merge_planner` 生成相邻切片对与资源处理计划
+4. `overlap_resolver` 产出去重决策
+5. `asset_relinker` 复制资源并改写 Markdown 中的链接
+6. `stitcher` 生成最终单文件 Markdown
+7. `postcheck` 对最终结果执行二次验证
+8. `writer` 写出最终产物和报告
+
+#### 异常传播与中断策略
+
+- `manifest_loader`、`provenance_loader`、`postcheck` 的致命错误默认直接中断，不产生部分交付物
+- `overlap_resolver` 若匹配不稳定，默认降级为保留重复内容并记录结构化 warning，而不是抛异常中断
+- `asset_relinker` 若资源复制失败，默认标记 `manual_review_required=true`；若失败导致最终 Markdown 存在不可恢复的断链，则升级为致命错误
+- 若 `config.fail_on_manual_review=true` 且最终结果需要人工复核，则 `pipeline.py` 应返回非 0 退出状态
+
+#### 耗时日志埋点
+
+建议在 `pipeline.py` 统一记录：
+
+- `manifest_load_ms`
+- `provenance_load_ms`
+- `overlap_resolve_ms`
+- `asset_relink_ms`
+- `stitch_ms`
+- `postcheck_ms`
+- `write_ms`
+- `total_ms`
 
 ---
 
@@ -616,6 +688,13 @@ normalized_text_hash = sha256(normalized_text.encode("utf-8")).hexdigest()
     "removed_overlap_blocks": 34,
     "warning_count": 1
   },
+  "asset_relinks": [
+    {
+      "slice_file": "第一章 系统概述（1-18）.pdf",
+      "original_path": "assets/p0003_img01.png",
+      "rewritten_path": "assets/001-第一章-系统概述/p0003_img01.png"
+    }
+  ],
   "pairs": [
     {
       "left_slice_file": "第一章 系统概述（1-18）.pdf",
@@ -626,7 +705,13 @@ normalized_text_hash = sha256(normalized_text.encode("utf-8")).hexdigest()
       "warning": null
     }
   ],
-  "warnings": []
+  "warnings": [
+    {
+      "warning_type": "upstream_manual_review_inherited",
+      "slice_file": "第三章 部署说明（36-52）.pdf",
+      "message": "上游切片已标记人工复核，Phase 4 继承该风险标记。"
+    }
+  ]
 }
 ```
 
@@ -653,6 +738,8 @@ normalized_text_hash = sha256(normalized_text.encode("utf-8")).hexdigest()
       "slice_file": "第一章 系统概述（1-18）.pdf",
       "display_title": "第一章 系统概述",
       "order_index": 1,
+      "start_page": 1,
+      "end_page": 18,
       "status": "merged",
       "manual_review_required": false
     }

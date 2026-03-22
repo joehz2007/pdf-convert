@@ -7,7 +7,7 @@ import pytest
 from pdf_extract.contracts import BlockNode, ImageNode, SliceTask, TableNode
 from pdf_extract.errors import EmptyExtractionError, PageMappingError
 from pdf_extract.markdown_extractor import extract_markdown_chunks
-from pdf_extract.metadata_builder import build_content_result, build_dedupe_key, classify_block, format_description_text, is_complex_table, normalize_cell_text, normalize_section_title
+from pdf_extract.metadata_builder import apply_inline_clause_breaks, build_content_result, build_dedupe_key, classify_block, format_description_text, is_complex_table, normalize_cell_text, normalize_section_title
 
 PNG_BYTES = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j2mQAAAAASUVORK5CYII=")
 
@@ -356,3 +356,67 @@ def test_section_title_rejects_overflow_row():
     # merging should have already removed such rows before section detection.
     # The important thing is that full data rows are NOT matched.
     pass  # This case is handled at the cross-page merging layer
+
+
+# ---------------------------------------------------------------------------
+# apply_inline_clause_breaks & format_description_text tests
+# ---------------------------------------------------------------------------
+
+
+def test_inline_clause_breaks_splits_limit_without_colon():
+    """'Use of funds Limit 64 characters' → line break before 'Limit'."""
+    result = apply_inline_clause_breaks("Use of funds Limit 64 characters")
+    assert "Use of funds\nLimit 64 characters" == result
+
+
+def test_inline_clause_breaks_splits_numbered_items():
+    """Numbered items like '1-Less than 3' should each get their own line."""
+    text = "Expected transaction frequency 1-Less than 3 within a day 2-Between 3 and 10 within a day 3-More than 10 within a day"
+    result = apply_inline_clause_breaks(text)
+    lines = result.split("\n")
+    assert lines[0] == "Expected transaction frequency"
+    assert lines[1].startswith("1-")
+    assert lines[2].startswith("2-")
+    assert lines[3].startswith("3-")
+
+
+def test_inline_clause_breaks_splits_letter_prefixed_items():
+    """V1-, V2-, V3- items should break after lowercase/digit context."""
+    # After lowercase letter: "day V1-" → "day\nV1-"
+    text = "within a day V1- Lower than 187k"
+    result = apply_inline_clause_breaks(text)
+    assert "\nV1-" in result
+    # After digit: "187k V2-" → "187k\nV2-"
+    text2 = "187k V2- 187k - 936k"
+    result2 = apply_inline_clause_breaks(text2)
+    assert "\nV2-" in result2
+
+
+def test_inline_clause_breaks_does_not_split_uppercase_before_v_code():
+    """'USD V1-' should NOT break between 'USD' and 'V1-' (uppercase D)."""
+    text = "USD V1- Lower"
+    result = apply_inline_clause_breaks(text)
+    assert "USD V1-" in result
+
+
+def test_format_description_text_preserves_numbered_items():
+    """format_description_text should keep numbered list items on separate lines."""
+    text = "Type of Enterprise\n1 - Sole proprietorship/partnership\n2 - Limited Liability Company"
+    result = format_description_text(text)
+    lines = result.split("\n")
+    assert any("1 - Sole" in line for line in lines)
+    assert any("2 - Limited" in line for line in lines)
+
+
+def test_format_description_text_splits_inline_clause():
+    """Pre-joined 'Limit' clause should be split by format_description_text."""
+    result = format_description_text("Source of fund Limit 64 characters")
+    assert "\n" in result
+    assert "Limit 64" in result.split("\n")[-1]
+
+
+def test_normalize_cell_text_preserves_clause_breaks():
+    """Clause break lines like 'Character limit:' should stay on separate lines."""
+    assert "\n" in normalize_cell_text("Country code\nCharacter limit: 2\nUnsupported country code:")
+    parts = normalize_cell_text("Country code\nCharacter limit: 2\nUnsupported country code:").split("\n")
+    assert len(parts) == 3

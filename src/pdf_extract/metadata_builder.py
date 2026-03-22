@@ -24,10 +24,10 @@ NESTED_SECTION_RE = re.compile(
     re.IGNORECASE,
 )
 WORDISH_CHAR_RE = re.compile(r"[A-Za-z0-9<>/]")
-BULLET_OR_NUMBERED_LINE_RE = re.compile(r"^(?:[-*•]|\d+[.)]|\d+\s*- )\s*")
+BULLET_OR_NUMBERED_LINE_RE = re.compile(r"^(?:[-*•]|\d+[.)]|\d+\s*-\s*|[A-Z]\d+\s*-\s)\s*")
 INLINE_CONNECTORS = {"a", "an", "and", "as", "at", "by", "for", "from", "in", "into", "of", "on", "or", "the", "to", "with"}
 CLAUSE_BREAK_RE = re.compile(
-    r"^(?:Format|For example|Example|Allowed:?|Character limit:?|Mandatory|Optional|Unsupported\b|Supported Types:?|MSB Limits:?|SaintPay Limits:?|Limit(?:s)?:|ISO\b)",
+    r"^(?:Format|For example|Example|Allowed:?|Character limit:?|Mandatory|Optional|Unsupported\b|Supported Types:?|MSB Limits:?|SaintPay Limits:?|Limit(?:s)?:|Limit \d|ISO\b)",
     re.IGNORECASE,
 )
 SECTION_TITLE_SUFFIX_RE = re.compile(
@@ -701,16 +701,22 @@ def should_join_with_space(previous: str, current: str) -> bool:
 def apply_inline_clause_breaks(value: str) -> str:
     text = value
     text = re.sub(
-        r"(?<=[A-Za-z])(?=(?:Format\b|For example\b|ISO\b|Allowed:|Supported Types:|MSB Limits:|SaintPay Limits:|Character limit:|Unsupported\b))",
+        r"(?<=[A-Za-z]) (?=(?:Format\b|For example\b|ISO\b|Allowed:|Supported Types:|MSB Limits:|SaintPay Limits:|Character limit:|Unsupported\b|Limit \d))",
         "\n",
         text,
+        flags=re.IGNORECASE,
     )
-    text = re.sub(r"(?<=[A-Za-z0-9)])(?=(?:\d+\s*-\s))", "\n", text)
+    # Break before numbered items: "frequency 1-Less" → "frequency\n1-Less"
+    text = re.sub(r"(?<=[a-z\"]) (?=\d+\s*-\s*[A-Za-z])", "\n", text)
+    # Break before letter-prefixed numbered items: "day V1- Lower" → "day\nV1- Lower"
+    # Only after lowercase/digit to avoid splitting "USD V1-"
+    text = re.sub(r"(?<=[a-z0-9)\"]) (?=[A-Z]\d+\s*-)", "\n", text)
     text = re.sub(r"\n{2,}", "\n", text)
     return text.strip()
 
 
 def format_description_text(value: str) -> str:
+    value = apply_inline_clause_breaks(value)
     lines = [line.strip() for line in value.split("\n") if line.strip()]
     if not lines:
         return ""

@@ -33,14 +33,56 @@ class LoadedManifest:
 
 
 @dataclass(slots=True)
+class BlockNode:
+    type: str
+    text: str
+    source_page: int
+    bbox: list[float]
+    reading_order: int
+    is_overlap: bool
+    dedupe_key: str
+
+
+@dataclass(slots=True)
+class TableNode:
+    type: str
+    source_page: int
+    bbox: list[float]
+    table_strategy_used: str
+    table_fallback_used: bool
+    table_retry_pages: list[int] = field(default_factory=list)
+    headers: list[str] = field(default_factory=list)
+    rows: list[list[Any]] = field(default_factory=list)
+    markdown: str | None = None
+    fallback_html: str | None = None
+    fallback_image: str | None = None
+    table_id: str = ""
+    parent_table_id: str | None = None
+    table_role: str = "standalone"
+    section_title: str | None = None
+    child_table_ids: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class ImageNode:
+    type: str
+    source_page: int
+    bbox: list[float]
+    asset_path: str
+    width: int
+    height: int
+    caption: str | None = None
+
+
+@dataclass(slots=True)
 class PageContent:
     slice_page: int
     source_page: int
     is_overlap: bool
     markdown: str
-    blocks: list[JsonDict] = field(default_factory=list)
-    tables: list[JsonDict] = field(default_factory=list)
-    images: list[JsonDict] = field(default_factory=list)
+    blocks: list[BlockNode] = field(default_factory=list)
+    tables: list[TableNode] = field(default_factory=list)
+    images: list[ImageNode] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -65,7 +107,9 @@ class ExtractSliceRecord:
     warning_count: int
     manual_review_required: bool
     elapsed_ms: int
+    error_code: str | None = None
     error_message: str | None = None
+    stage_timings: JsonDict = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -81,3 +125,4 @@ class ExtractManifest:
     total_warnings: int
     total_elapsed_ms: int
     slices: list[ExtractSliceRecord]
+    timings: JsonDict = field(default_factory=dict)

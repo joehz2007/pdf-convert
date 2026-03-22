@@ -27,9 +27,13 @@ def _create_pdf(path: Path, pages: list[dict], toc: list[list] | None = None, en
         if page_data.get("shapes"):
             for shape in page_data["shapes"]:
                 if shape["type"] == "rect":
-                    page.draw_rect(shape["rect"], color=(0, 0, 0), fill=(0.8, 0.8, 0.8))
+                    page.draw_rect(shape["rect"], color=(0, 0, 0), fill=shape.get("fill", (0.8, 0.8, 0.8)), width=shape.get("width", 1))
+                if shape["type"] == "line":
+                    page.draw_line(shape["p1"], shape["p2"], color=(0, 0, 0), width=shape.get("width", 1))
+        for image in page_data.get("images", []):
+            page.insert_image(image["rect"], stream=image["stream"])
         for extra_text in page_data.get("extra_texts", []):
-            page.insert_text(extra_text["point"], extra_text["text"], fontsize=extra_text.get("fontsize", 11))
+            page.insert_text(extra_text["point"], extra_text["text"], fontsize=extra_text.get("fontsize", 11), fontname=extra_text.get("fontname", "helv"))
 
     if toc:
         document.set_toc(toc)

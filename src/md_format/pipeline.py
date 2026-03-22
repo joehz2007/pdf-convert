@@ -17,6 +17,7 @@ from .contracts import (
     NormalizedDocument,
     ReviewReport,
 )
+from .coverage_auditor import audit_coverage
 from .errors import MdFormatError
 from .manifest_loader import load_extract_manifest
 from .writer import (
@@ -204,60 +205,51 @@ def _process_all_slices(
 def _process_slice(task: FormatTask) -> SliceProcessOutcome:
     """Process a single slice through the Phase 3 pipeline.
 
-    Current implementation is a placeholder that passes through the
-    Phase 2 draft Markdown with minimal processing.  Real audit, repair,
-    render, normalize, and postcheck stages will be implemented in M2/M3.
+    Stages: coverage audit → repair (placeholder) → render (placeholder)
+    → postcheck (placeholder) → build review report.
     """
     stage_timings = new_stage_timings()
     try:
-        # --- Stage: coverage audit (placeholder) ---
+        # --- Stage: coverage audit ---
         audit_start = perf_counter()
         content_data = json.loads(task.content_file.read_text(encoding="utf-8"))
         draft_markdown = task.draft_md_file.read_text(encoding="utf-8")
+        audit_result = audit_coverage(content_data, draft_markdown)
         stage_timings["coverage_audit_ms"] = elapsed_ms_since(audit_start)
 
-        # --- Stage: repair (placeholder) ---
+        # --- Stage: repair (placeholder — M3 will implement) ---
         repair_start = perf_counter()
         final_markdown = draft_markdown
         stage_timings["repair_ms"] = elapsed_ms_since(repair_start)
 
-        # --- Stage: render (placeholder) ---
+        # --- Stage: render (placeholder — M3 will implement) ---
         render_start = perf_counter()
         stage_timings["render_ms"] = elapsed_ms_since(render_start)
 
-        # --- Stage: postcheck (placeholder) ---
+        # --- Stage: postcheck (placeholder — M3 will implement) ---
         postcheck_start = perf_counter()
         stage_timings["postcheck_ms"] = elapsed_ms_since(postcheck_start)
 
-        # Build review report
-        source_pages = content_data.get("source_pages", [])
-        text_blocks_expected = sum(len(p.get("blocks", [])) for p in source_pages)
-        tables_expected = sum(len(p.get("tables", [])) for p in source_pages)
-        images_expected = sum(len(p.get("images", [])) for p in source_pages)
-        overlap_expected = sum(1 for p in source_pages if p.get("is_overlap"))
+        # Determine manual review
+        has_errors = any(i.severity == "error" for i in audit_result.issues)
+        manual_review = task.phase2_manual_review_required or has_errors
 
+        # Build review report
         report = ReviewReport(
             slice_file=task.slice_file,
             final_md_file=task.draft_md_file.name,
             created_at=datetime.now(timezone.utc).isoformat(),
             status="success",
-            manual_review_required=task.phase2_manual_review_required,
-            coverage=CoverageStats(
-                text_blocks_expected=text_blocks_expected,
-                text_blocks_matched=text_blocks_expected,
-                tables_expected=tables_expected,
-                tables_matched=tables_expected,
-                images_expected=images_expected,
-                images_matched=images_expected,
-                overlap_pages_expected=overlap_expected,
-                overlap_pages_matched=overlap_expected,
-            ),
+            manual_review_required=manual_review,
+            coverage=audit_result.coverage,
             formatted_stats={
                 "char_count": len(final_markdown),
-                "block_count": text_blocks_expected,
-                "table_count": tables_expected,
-                "image_count": images_expected,
+                "block_count": audit_result.coverage.text_blocks_expected,
+                "table_count": audit_result.coverage.tables_expected,
+                "image_count": audit_result.coverage.images_expected,
             },
+            issues=audit_result.issues,
+            warnings=[i.message for i in audit_result.issues if i.severity == "warning"],
         )
 
         finalize_stage_timings(stage_timings)

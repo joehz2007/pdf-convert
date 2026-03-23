@@ -802,6 +802,18 @@ class TestRejoinSplitIdentifiers:
         from md_format.repair_engine import _rejoin_split_identifiers
         assert _rejoin_split_identifiers("a b c") == "a b c"
 
+    def test_three_word_fragment_join(self):
+        from md_format.repair_engine import _rejoin_split_identifiers
+        # Right-to-left scan: "supportC"+"urrency" joined, skip left neighbor
+        assert _rejoin_split_identifiers("currency supportC urrency") == "currency supportCurrency"
+        assert _rejoin_split_identifiers("cryptoMethod cryptoAd dressInfo") == "cryptoMethod cryptoAddressInfo"
+        assert _rejoin_split_identifiers("fiatMethod fiatAccou ntInfo") == "fiatMethod fiatAccountInfo"
+
+    def test_multiword_no_false_merge(self):
+        from md_format.repair_engine import _rejoin_split_identifiers
+        # "Request Example" are both common-ish words — should NOT be joined
+        assert _rejoin_split_identifiers("Field Request Example") == "Field Request Example"
+
 
 class TestRebuildPipeTableRepair:
     """Test that _rebuild_pipe_table applies identifier rejoin."""

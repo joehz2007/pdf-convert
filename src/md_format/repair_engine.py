@@ -83,6 +83,25 @@ _CODE_STMT_RE = re.compile(
 )
 
 
+# Full-page image detection threshold (PDF points)
+_FULLPAGE_IMAGE_HEIGHT_THRESHOLD = 600  # ~75% of standard page height (792-842pt)
+_FULLPAGE_IMAGE_MIN_TEXT_BLOCKS = 3     # page must have text to be redundant
+
+
+def _is_fullpage_image(image: dict, n_text_blocks: int) -> bool:
+    """Detect full-page screenshots that are redundant with extracted text.
+
+    Phase 2 often exports a full-page render for every page.  When the page
+    also has extracted text blocks, the image is redundant and breaks inline
+    content flow (especially code blocks that span pages).
+    """
+    bbox = image.get("bbox", [0, 0, 0, 0])
+    if len(bbox) < 4:
+        return False
+    height = bbox[3] - bbox[1]
+    return height > _FULLPAGE_IMAGE_HEIGHT_THRESHOLD and n_text_blocks >= _FULLPAGE_IMAGE_MIN_TEXT_BLOCKS
+
+
 def repair(
     task: FormatTask,
     content_data: dict[str, Any],
@@ -150,8 +169,17 @@ def repair(
                 is_overlap=is_overlap,
             ))
 
-        # Add images
+        # Add images (suppress full-page screenshots)
+        n_text_blocks = len(page_data.get("blocks", []))
         for idx, image in enumerate(page_data.get("images", [])):
+            if _is_fullpage_image(image, n_text_blocks):
+                auto_fixes.append(AutoFix(
+                    fix_type="fullpage_image_suppressed",
+                    source_page=source_page,
+                    node_ref=image_node_ref(source_page, idx),
+                    message="Suppressed full-page screenshot (redundant with extracted text)",
+                ))
+                continue
             node_ref = image_node_ref(source_page, idx)
             reading_order = _image_reading_order(image, page_data)
             image_md = _image_to_markdown(image, node_ref, auto_fixes, source_page)
@@ -197,9 +225,13 @@ def repair(
         },
     )
 
-    # Pre-repair: recover code blocks from draft markdown + merge code-like paragraphs
-    _recover_code_blocks_from_draft(doc, draft_markdown, auto_fixes)
+    # Pre-repair: merge consecutive code-like paragraphs FIRST (handles brace
+    # lines like "}" that draft recovery would skip), then draft recovery
+    # wraps remaining isolated code lines that match fenced blocks in the draft.
+    # Finally, stitch adjacent code blocks that span page boundaries.
     _merge_code_line_paragraphs(doc, auto_fixes)
+    _recover_code_blocks_from_draft(doc, draft_markdown, auto_fixes)
+    _stitch_adjacent_code_blocks(doc, auto_fixes)
 
     # Phase A: Completeness fixes
     _fix_missing_top_heading(doc, auto_fixes)
@@ -843,6 +875,92 @@ def _is_brace_line(text: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Cross-page code block stitching
+# ---------------------------------------------------------------------------
+
+
+def _stitch_adjacent_code_blocks(
+    doc: NormalizedDocument,
+    auto_fixes: list[AutoFix],
+) -> None:
+    """Merge code blocks that span page boundaries.
+
+    After per-page code merging, code that spans two pages ends up as
+    separate fenced blocks on adjacent pages.  This pass finds the last
+    code block on page N and the first code block on page N+1, and merges
+    them into a single fence.
+    """
+    for pi in range(len(doc.pages) - 1):
+        page_a = doc.pages[pi]
+        page_b = doc.pages[pi + 1]
+
+        # Find last code block on page A
+        last_code_idx = None
+        for bi in range(len(page_a.blocks) - 1, -1, -1):
+            b = page_a.blocks[bi]
+            if b.markdown and b.block_type == "code":
+                last_code_idx = bi
+                break
+            # Stop if we hit a non-empty non-code block
+            if b.markdown and b.block_type not in ("code",):
+                break
+
+        if last_code_idx is None:
+            continue
+
+        # Find first code block on page B (allow skipping empty blocks)
+        first_code_idx = None
+        for bi, b in enumerate(page_b.blocks):
+            if b.markdown and b.block_type == "code":
+                first_code_idx = bi
+                break
+            # Allow skipping empty / suppressed blocks, stop at real content
+            if b.markdown and b.block_type not in ("code",):
+                break
+
+        if first_code_idx is None:
+            continue
+
+        block_a = page_a.blocks[last_code_idx]
+        block_b = page_b.blocks[first_code_idx]
+
+        # Extract code content from fenced blocks
+        code_a = _strip_fences(block_a.markdown)
+        code_b = _strip_fences(block_b.markdown)
+
+        if not code_a or not code_b:
+            continue
+
+        # Merge: extend block A, clear block B
+        block_a.markdown = "```\n" + code_a + "\n" + code_b + "\n```"
+        block_a.repaired = True
+        block_a.repair_actions.append("code_cross_page_stitched")
+        block_b.markdown = ""
+        auto_fixes.append(AutoFix(
+            fix_type="code_cross_page_stitched",
+            source_page=block_a.source_page,
+            node_ref=block_a.node_ref,
+            message=f"Stitched code blocks across pages {block_a.source_page}-{block_b.source_page}",
+        ))
+
+
+def _strip_fences(md: str) -> str:
+    """Remove ``` fences from a code block markdown string."""
+    lines = md.strip().splitlines()
+    if not lines:
+        return ""
+    # Remove opening fence
+    start = 0
+    if lines[0].strip().startswith("```"):
+        start = 1
+    # Remove closing fence
+    end = len(lines)
+    if end > start and lines[-1].strip() == "```":
+        end -= 1
+    return "\n".join(lines[start:end])
+
+
+# ---------------------------------------------------------------------------
 # Table quality helpers
 # ---------------------------------------------------------------------------
 
@@ -885,36 +1003,58 @@ def _is_corrupted_table_markdown(md: str) -> bool:
 def _rejoin_split_identifiers(text: str) -> str:
     """Rejoin camelCase/PascalCase identifiers split by PDF line wrapping.
 
-    Handles two patterns:
-      "cryptoAd dressInfo"  → "cryptoAddressInfo"  (lowercase continuation)
-      "complete Time"       → "completeTime"       (PascalCase continuation)
+    Handles multi-word strings by scanning adjacent pairs right-to-left,
+    skipping one position after each join to prevent over-merging.
+
+    Examples:
+      "cryptoAd dressInfo"                → "cryptoAddressInfo"
+      "complete Time"                     → "completeTime"
+      "currency supportC urrency"         → "currency supportCurrency"
+      "cryptoMethod cryptoAd dressInfo"   → "cryptoMethod cryptoAddressInfo"
     """
     words = text.split()
-    if len(words) != 2:
-        return text
-    left, right = words
-    if len(left) + len(right) > 35:
+    if len(words) < 2:
         return text
 
-    # Case 1: right starts lowercase (e.g. "cryptoAd" + "dressInfo")
-    if right[0].islower():
-        joined = left + right
-        if re.search(r"[a-z][A-Z]", joined):
-            return joined
+    # Scan right-to-left: join the rightmost fragment pair first,
+    # then skip one position to prevent chaining into the left neighbor.
+    i = len(words) - 2
+    while i >= 0:
+        left, right = words[i], words[i + 1]
+        if len(left) + len(right) > 35:
+            i -= 1
+            continue
 
-    # Case 2: right starts uppercase, left all lowercase (e.g. "complete" + "Time")
-    if right[0].isupper() and left == left.lower() and left not in _COMMON_WORDS:
-        joined = left + right
-        if re.search(r"[a-z][A-Z]", joined):
-            return joined
+        joined_pair = False
 
-    return text
+        # Case 1: right starts lowercase (e.g. "cryptoAd" + "dressInfo")
+        if right[0].islower():
+            joined = left + right
+            if re.search(r"[a-z][A-Z]", joined):
+                words[i] = joined
+                words.pop(i + 1)
+                joined_pair = True
+
+        # Case 2: right starts uppercase, left all lowercase, not common word
+        # (e.g. "complete" + "Time")
+        if not joined_pair and right[0].isupper() and left == left.lower() and left not in _COMMON_WORDS:
+            joined = left + right
+            if re.search(r"[a-z][A-Z]", joined):
+                words[i] = joined
+                words.pop(i + 1)
+                joined_pair = True
+
+        # After joining, skip one extra position to avoid over-merging
+        # e.g. "currency supportCurrency" — don't try joining "currency" with it
+        i -= 2 if joined_pair else 1
+
+    return " ".join(words)
 
 
 def _sanitize_pipe_cell(value: object) -> str:
     """Sanitize a value for inclusion in a GFM pipe table cell."""
     text = str(value) if value is not None else ""
-    text = _rejoin_split_identifiers(text)
     text = text.replace("|", "\\|")
     text = text.replace("\r\n", "<br>").replace("\n", "<br>")
+    text = _rejoin_split_identifiers(text)
     return text.strip()

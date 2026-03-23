@@ -55,6 +55,33 @@ _HEADING_APPENDIX_RE = re.compile(r"^附录")
 # Broken table detection
 _BROKEN_TABLE_RE = re.compile(r"[A-Za-z]{2,}<br>[A-Za-z]{1,}")
 
+# Common words that should NOT be joined with a following capitalized word
+_COMMON_WORDS = frozenset({
+    "a", "an", "the", "this", "that", "these", "those",
+    "is", "are", "was", "were", "be", "been", "being",
+    "have", "has", "had", "do", "does", "did",
+    "will", "would", "shall", "should", "may", "might", "can", "could",
+    "not", "no", "or", "and", "but", "if", "of", "at", "by",
+    "for", "in", "on", "to", "with", "from", "as",
+    "all", "each", "every", "any", "some", "its", "per",
+})
+
+# Code line detection
+_CODE_STMT_RE = re.compile(
+    r"(?:"
+    r"[;{}]\s*$"                       # ends with ; or { or }
+    r"|^\s*[{}]\s*$"                   # line is just a brace
+    r"|\w+\.\w+\("                     # method call: obj.method(
+    r"|\w+\([^)]*[,)]"                # function call with args
+    r"|^\s*(?:public|private|protected|static|final|void|class|interface|def|function|const|let|var|import|from|return|try|catch|throw|new|if|else|for|while|switch|case)\b"
+    r"|^\s*(?:byte|int|long|String|boolean|char|double|float)\s*[\[\]]*\s+\w"
+    r"|^\s*@\w+"                       # annotations
+    r"|^\s*//|/\*|\*/"                 # comments
+    r"|=\s*(?:new|null|true|false|\"|\d)"  # assignments
+    r"|^\s*\*\s+@"                     # javadoc params
+    r")"
+)
+
 
 def repair(
     task: FormatTask,
@@ -170,8 +197,9 @@ def repair(
         },
     )
 
-    # Pre-repair: recover code blocks from draft markdown
+    # Pre-repair: recover code blocks from draft markdown + merge code-like paragraphs
     _recover_code_blocks_from_draft(doc, draft_markdown, auto_fixes)
+    _merge_code_line_paragraphs(doc, auto_fixes)
 
     # Phase A: Completeness fixes
     _fix_missing_top_heading(doc, auto_fixes)
@@ -215,10 +243,10 @@ def _table_to_markdown(
     source_page: int,
 ) -> str:
     """Convert a table node to Markdown, with fallback chain."""
-    # Try structured markdown first — but validate it
+    # Try structured markdown first — but validate and repair it
     md = table.get("markdown", "")
     if md and md.strip() and not _is_corrupted_table_markdown(md):
-        return md.strip()
+        return _repair_table_markdown(md).strip()
 
     headers = table.get("headers", [])
     rows = table.get("rows", [])
@@ -740,8 +768,96 @@ def _extract_draft_code_texts(draft_markdown: str) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
+# Consecutive code paragraph merging
+# ---------------------------------------------------------------------------
+
+
+def _merge_code_line_paragraphs(
+    doc: NormalizedDocument,
+    auto_fixes: list[AutoFix],
+) -> None:
+    """Merge sequences of single-line paragraph blocks that form source code.
+
+    When Phase 2 extracts code from a PDF, each line of code often becomes
+    a separate paragraph block.  This pass detects sequences of 3+ consecutive
+    code-like paragraphs and merges them into a single fenced code block.
+    """
+    for page in doc.pages:
+        i = 0
+        while i < len(page.blocks):
+            block = page.blocks[i]
+            if block.block_type != "paragraph" or not block.markdown:
+                i += 1
+                continue
+            if not _is_code_like(block.markdown):
+                i += 1
+                continue
+
+            # Scan forward — collect consecutive code-like paragraphs,
+            # stopping at non-paragraph or non-code-like blocks.
+            j = i + 1
+            while j < len(page.blocks):
+                nxt = page.blocks[j]
+                if nxt.block_type != "paragraph" or not nxt.markdown:
+                    break
+                if not _is_code_like(nxt.markdown):
+                    break
+                j += 1
+
+            count = j - i
+            if count >= 3:
+                code_lines = [page.blocks[k].markdown for k in range(i, j)]
+                block.block_type = "code"
+                block.markdown = "```\n" + "\n".join(code_lines) + "\n```"
+                block.repaired = True
+                block.repair_actions.append("code_block_rebuilt")
+                for k in range(i + 1, j):
+                    page.blocks[k].markdown = ""
+                auto_fixes.append(AutoFix(
+                    fix_type="code_block_rebuilt",
+                    source_page=block.source_page,
+                    node_ref=block.node_ref,
+                    message=f"Merged {count} code-like paragraphs into code block",
+                ))
+                i = j
+            else:
+                i += 1
+
+
+def _is_code_like(text: str) -> bool:
+    """Check if a single paragraph looks like a line of source code."""
+    stripped = text.strip()
+    if not stripped or len(stripped) > 200:
+        return False
+    # Must have some alpha characters (not just punctuation / numbers)
+    if not re.search(r"[a-zA-Z]", stripped):
+        return False
+    return bool(_CODE_STMT_RE.search(stripped))
+
+
+# ---------------------------------------------------------------------------
 # Table quality helpers
 # ---------------------------------------------------------------------------
+
+
+def _repair_table_markdown(md: str) -> str:
+    """Repair split identifiers within pipe table cells."""
+    lines = md.strip().splitlines()
+    repaired: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped.startswith("|") or not stripped.endswith("|"):
+            repaired.append(line)
+            continue
+        # Skip separator rows
+        if _PIPE_TABLE_SEP_RE.match(stripped):
+            repaired.append(line)
+            continue
+        # Split into cells and repair each
+        parts = stripped.split("|")
+        fixed = [_rejoin_split_identifiers(p.strip()) for p in parts]
+        repaired.append("| " + " | ".join(c for c in fixed[1:-1]) + " |")
+    return "\n".join(repaired)
 
 
 def _is_corrupted_table_markdown(md: str) -> bool:
@@ -759,9 +875,39 @@ def _is_corrupted_table_markdown(md: str) -> bool:
     return False
 
 
+def _rejoin_split_identifiers(text: str) -> str:
+    """Rejoin camelCase/PascalCase identifiers split by PDF line wrapping.
+
+    Handles two patterns:
+      "cryptoAd dressInfo"  → "cryptoAddressInfo"  (lowercase continuation)
+      "complete Time"       → "completeTime"       (PascalCase continuation)
+    """
+    words = text.split()
+    if len(words) != 2:
+        return text
+    left, right = words
+    if len(left) + len(right) > 35:
+        return text
+
+    # Case 1: right starts lowercase (e.g. "cryptoAd" + "dressInfo")
+    if right[0].islower():
+        joined = left + right
+        if re.search(r"[a-z][A-Z]", joined):
+            return joined
+
+    # Case 2: right starts uppercase, left all lowercase (e.g. "complete" + "Time")
+    if right[0].isupper() and left == left.lower() and left not in _COMMON_WORDS:
+        joined = left + right
+        if re.search(r"[a-z][A-Z]", joined):
+            return joined
+
+    return text
+
+
 def _sanitize_pipe_cell(value: object) -> str:
     """Sanitize a value for inclusion in a GFM pipe table cell."""
     text = str(value) if value is not None else ""
+    text = _rejoin_split_identifiers(text)
     text = text.replace("|", "\\|")
     text = text.replace("\r\n", "<br>").replace("\n", "<br>")
     return text.strip()

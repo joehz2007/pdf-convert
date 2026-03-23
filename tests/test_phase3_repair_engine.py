@@ -756,3 +756,224 @@ class TestPhase2HeadingLevel:
     def test_default_level(self):
         from pdf_extract.metadata_builder import detect_heading_level
         assert detect_heading_level("Unknown Heading") == 2
+
+
+# ---------------------------------------------------------------------------
+# Split identifier rejoin tests
+# ---------------------------------------------------------------------------
+
+
+class TestRejoinSplitIdentifiers:
+    """Test _rejoin_split_identifiers for table cell repair."""
+
+    def test_camelcase_lowercase_continuation(self):
+        from md_format.repair_engine import _rejoin_split_identifiers
+        assert _rejoin_split_identifiers("cryptoAd dressInfo") == "cryptoAddressInfo"
+        assert _rejoin_split_identifiers("fiatAccou ntInfo") == "fiatAccountInfo"
+        assert _rejoin_split_identifiers("bankAcco untNumber") == "bankAccountNumber"
+        assert _rejoin_split_identifiers("receiveA mount") == "receiveAmount"
+        assert _rejoin_split_identifiers("origPaym entId") == "origPaymentId"
+        assert _rejoin_split_identifiers("supportC urrency") == "supportCurrency"
+
+    def test_pascal_case_split(self):
+        from md_format.repair_engine import _rejoin_split_identifiers
+        assert _rejoin_split_identifiers("complete Time") == "completeTime"
+        assert _rejoin_split_identifiers("reference Message") == "referenceMessage"
+        assert _rejoin_split_identifiers("account Name") == "accountName"
+
+    def test_common_words_not_joined(self):
+        from md_format.repair_engine import _rejoin_split_identifiers
+        # Articles/prepositions should NOT be joined
+        assert _rejoin_split_identifiers("the Table") == "the Table"
+        assert _rejoin_split_identifiers("a Method") == "a Method"
+        assert _rejoin_split_identifiers("in Memory") == "in Memory"
+
+    def test_non_camelcase_not_joined(self):
+        from md_format.repair_engine import _rejoin_split_identifiers
+        # Joining these wouldn't produce camelCase → no change
+        assert _rejoin_split_identifiers("Beneficiary account") == "Beneficiary account"
+        assert _rejoin_split_identifiers("decimal string") == "decimal string"
+
+    def test_single_word_unchanged(self):
+        from md_format.repair_engine import _rejoin_split_identifiers
+        assert _rejoin_split_identifiers("requestId") == "requestId"
+
+    def test_three_words_unchanged(self):
+        from md_format.repair_engine import _rejoin_split_identifiers
+        assert _rejoin_split_identifiers("a b c") == "a b c"
+
+
+class TestRebuildPipeTableRepair:
+    """Test that _rebuild_pipe_table applies identifier rejoin."""
+
+    def test_split_field_names_repaired(self):
+        from md_format.repair_engine import _rebuild_pipe_table
+        headers = ["Field", "Type"]
+        rows = [
+            ["cryptoAd dressInfo", "object"],
+            ["receiveA mount", "string"],
+        ]
+        result = _rebuild_pipe_table(headers, rows)
+        assert "cryptoAddressInfo" in result
+        assert "receiveAmount" in result
+
+    def test_clean_names_unchanged(self):
+        from md_format.repair_engine import _rebuild_pipe_table
+        headers = ["Field", "Type"]
+        rows = [["requestId", "string"]]
+        result = _rebuild_pipe_table(headers, rows)
+        assert "requestId" in result
+
+
+# ---------------------------------------------------------------------------
+# Code paragraph merging tests
+# ---------------------------------------------------------------------------
+
+
+class TestMergeCodeLineParagraphs:
+    """Test _merge_code_line_paragraphs for consecutive code-line detection."""
+
+    def test_java_code_lines_merged(self):
+        """Consecutive Java-like lines are merged into a code block."""
+        from md_format.repair_engine import _merge_code_line_paragraphs
+        from md_format.contracts import NormalizedBlock, NormalizedPage, NormalizedDocument, AutoFix
+
+        blocks = [
+            NormalizedBlock("paragraph", 1, 1, "p1", "public static String[] encrypt(String plainText) {", False),
+            NormalizedBlock("paragraph", 1, 2, "p2", "Validate.notNull(plainText);", False),
+            NormalizedBlock("paragraph", 1, 3, "p3", "byte[] key = Hex.decodeHex(keyHex);", False),
+            NormalizedBlock("paragraph", 1, 4, "p4", "return new String[]{result};", False),
+            NormalizedBlock("paragraph", 1, 5, "p5", "}", False),
+        ]
+        doc = NormalizedDocument(
+            slice_file="test.pdf", display_title="", order_index=1,
+            start_page=1, end_page=1,
+            pages=[NormalizedPage(1, 1, False, blocks=blocks)],
+        )
+        fixes: list[AutoFix] = []
+        _merge_code_line_paragraphs(doc, fixes)
+
+        code_blocks = [b for b in doc.pages[0].blocks if b.block_type == "code" and b.markdown]
+        assert len(code_blocks) == 1
+        assert "```" in code_blocks[0].markdown
+        assert "encrypt" in code_blocks[0].markdown
+        assert "Validate.notNull" in code_blocks[0].markdown
+        assert any(f.fix_type == "code_block_rebuilt" for f in fixes)
+
+    def test_non_code_paragraphs_not_merged(self):
+        """Normal English paragraphs are not merged as code."""
+        from md_format.repair_engine import _merge_code_line_paragraphs
+        from md_format.contracts import NormalizedBlock, NormalizedPage, NormalizedDocument, AutoFix
+
+        blocks = [
+            NormalizedBlock("paragraph", 1, 1, "p1", "This is a normal sentence.", False),
+            NormalizedBlock("paragraph", 1, 2, "p2", "Another paragraph of text.", False),
+            NormalizedBlock("paragraph", 1, 3, "p3", "Yet more description text.", False),
+        ]
+        doc = NormalizedDocument(
+            slice_file="test.pdf", display_title="", order_index=1,
+            start_page=1, end_page=1,
+            pages=[NormalizedPage(1, 1, False, blocks=blocks)],
+        )
+        fixes: list[AutoFix] = []
+        _merge_code_line_paragraphs(doc, fixes)
+
+        code_blocks = [b for b in doc.pages[0].blocks if b.block_type == "code"]
+        assert len(code_blocks) == 0
+        assert len(fixes) == 0
+
+    def test_two_code_lines_not_merged(self):
+        """Only 2 consecutive code lines — below threshold of 3."""
+        from md_format.repair_engine import _merge_code_line_paragraphs
+        from md_format.contracts import NormalizedBlock, NormalizedPage, NormalizedDocument, AutoFix
+
+        blocks = [
+            NormalizedBlock("paragraph", 1, 1, "p1", "try {", False),
+            NormalizedBlock("paragraph", 1, 2, "p2", "}", False),
+        ]
+        doc = NormalizedDocument(
+            slice_file="test.pdf", display_title="", order_index=1,
+            start_page=1, end_page=1,
+            pages=[NormalizedPage(1, 1, False, blocks=blocks)],
+        )
+        fixes: list[AutoFix] = []
+        _merge_code_line_paragraphs(doc, fixes)
+        assert len(fixes) == 0
+
+    def test_image_breaks_code_sequence(self):
+        """An image block between code-like paragraphs breaks the sequence."""
+        from md_format.repair_engine import _merge_code_line_paragraphs
+        from md_format.contracts import NormalizedBlock, NormalizedPage, NormalizedDocument, AutoFix
+
+        blocks = [
+            NormalizedBlock("paragraph", 1, 1, "p1", "try {", False),
+            NormalizedBlock("paragraph", 1, 2, "p2", "Validate.notNull(x);", False),
+            NormalizedBlock("image", 1, 3, "img1", "![image](img.png)", False),
+            NormalizedBlock("paragraph", 1, 4, "p3", "return result;", False),
+            NormalizedBlock("paragraph", 1, 5, "p4", "}", False),
+        ]
+        doc = NormalizedDocument(
+            slice_file="test.pdf", display_title="", order_index=1,
+            start_page=1, end_page=1,
+            pages=[NormalizedPage(1, 1, False, blocks=blocks)],
+        )
+        fixes: list[AutoFix] = []
+        _merge_code_line_paragraphs(doc, fixes)
+
+        # Only 2 code lines before image (below threshold), 2 after (below threshold)
+        code_blocks = [b for b in doc.pages[0].blocks if b.block_type == "code"]
+        assert len(code_blocks) == 0
+
+
+class TestIsCodeLike:
+    """Test the _is_code_like heuristic."""
+
+    def test_java_statements(self):
+        from md_format.repair_engine import _is_code_like
+        assert _is_code_like("public static void main(String[] args) {")
+        assert _is_code_like("Validate.notNull(plainText);")
+        assert _is_code_like("byte[] key = Hex.decodeHex(keyHex);")
+        assert _is_code_like("return new String[]{result};")
+        # Lone brace without alpha chars is not classified as code
+        assert not _is_code_like("}")
+        assert _is_code_like("try {")
+        assert _is_code_like("} catch (Exception e) {")
+
+    def test_typescript_statements(self):
+        from md_format.repair_engine import _is_code_like
+        assert _is_code_like("const result = await fetch(url);")
+        assert _is_code_like("function encrypt(data: string) {")
+
+    def test_assignments(self):
+        from md_format.repair_engine import _is_code_like
+        assert _is_code_like('String name = "test";')
+        assert _is_code_like("int count = 0;")
+
+    def test_normal_text_rejected(self):
+        from md_format.repair_engine import _is_code_like
+        assert not _is_code_like("This is a normal sentence.")
+        assert not _is_code_like("The payment was processed successfully.")
+        assert not _is_code_like("Optional reference or description")
+
+    def test_empty_and_long_rejected(self):
+        from md_format.repair_engine import _is_code_like
+        assert not _is_code_like("")
+        assert not _is_code_like("x" * 201)
+
+
+class TestPhase2JoinWithoutSpace:
+    """Test should_join_without_space camelCase detection."""
+
+    def test_camelcase_joined(self):
+        from pdf_extract.metadata_builder import should_join_without_space
+        assert should_join_without_space("cryptoAd", "dressInfo") is True
+        assert should_join_without_space("receiveA", "mount") is True
+
+    def test_pascal_single_word_joined(self):
+        from pdf_extract.metadata_builder import should_join_without_space
+        assert should_join_without_space("complete", "Time") is True
+
+    def test_normal_text_not_joined(self):
+        from pdf_extract.metadata_builder import should_join_without_space
+        # Multiple words on previous line → PascalCase check requires single word
+        assert should_join_without_space("the field is", "Required") is False

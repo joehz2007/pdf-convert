@@ -31,6 +31,30 @@ NESTED_SECTION_RE = re.compile(
 WORDISH_CHAR_RE = re.compile(r"[A-Za-z0-9<>/]")
 BULLET_OR_NUMBERED_LINE_RE = re.compile(r"^(?:[-*•]|\d+[.)]|\d+\s*-\s*|[A-Z]\d+\s*-\s)\s*")
 INLINE_CONNECTORS = {"a", "an", "and", "as", "at", "by", "for", "from", "in", "into", "of", "on", "or", "the", "to", "with"}
+# Common English words that should NOT be PascalCase-joined.  When BOTH tokens
+# are in this set the join is almost certainly a false positive
+# (e.g. "Request" + "Example" → NOT an identifier).
+_PASCAL_COMMON_WORDS = frozenset({
+    # articles / prepositions / conjunctions (overlap with INLINE_CONNECTORS)
+    "a", "an", "the", "this", "that", "these", "those",
+    "is", "are", "was", "were", "be", "been", "being",
+    "have", "has", "had", "do", "does", "did",
+    "will", "would", "shall", "should", "may", "might", "can", "could",
+    "not", "no", "or", "and", "but", "if", "of", "at", "by",
+    "for", "in", "on", "to", "with", "from", "as",
+    # common nouns / adjectives frequent in API docs & table headers
+    "request", "response", "account", "example", "parameters", "parameter",
+    "statement", "description", "information", "details", "detail",
+    "message", "method", "header", "headers", "body", "field", "fields",
+    "value", "values", "name", "type", "types", "code", "status",
+    "result", "results", "error", "errors", "data", "list", "object",
+    "number", "string", "query", "path", "table", "format",
+    "required", "optional", "default", "maximum", "minimum",
+    "length", "limit", "size", "total", "count", "amount",
+    "order", "payment", "transaction", "currency", "address",
+    "create", "update", "delete", "get", "set", "add", "remove",
+    "input", "output", "source", "target", "key", "id",
+})
 CLAUSE_BREAK_RE = re.compile(
     r"^(?:Format|For example|Example|Allowed:?|Character limit:?|Mandatory|Optional|Unsupported\b|Supported Types:?|MSB Limits:?|SaintPay Limits:?|Limit(?:s)?:|Limit \d|ISO\b)",
     re.IGNORECASE,
@@ -749,13 +773,18 @@ def should_join_without_space(previous: str, current: str) -> bool:
 
     # Detect PascalCase split when both lines are single-word tokens:
     # e.g. "complete" + "Time" → join produces "completeTime"
+    # Guard: if BOTH tokens are common English words, it is almost certainly
+    # a normal phrase ("Request Example"), not a split identifier.
     if (current_token[0].isupper() and prev_token[-1].islower()
             and previous.strip() == prev_token and current.strip() == current_token
             and current_token.lower() not in INLINE_CONNECTORS
             and len(prev_token) + len(current_token) <= 35):
-        joined = prev_token + current_token
-        if re.search(r"[a-z][A-Z]", joined):
-            return True
+        both_common = (prev_token.lower() in _PASCAL_COMMON_WORDS
+                       and current_token.lower() in _PASCAL_COMMON_WORDS)
+        if not both_common:
+            joined = prev_token + current_token
+            if re.search(r"[a-z][A-Z]", joined):
+                return True
 
     return current_token[0].islower() and ((len(prev_token) >= 3 and len(current_token) <= 4) or (len(prev_token) == 1 and prev_token.isalpha()))
 

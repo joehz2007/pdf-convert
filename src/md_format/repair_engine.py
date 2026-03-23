@@ -793,14 +793,15 @@ def _merge_code_line_paragraphs(
                 i += 1
                 continue
 
-            # Scan forward — collect consecutive code-like paragraphs,
-            # stopping at non-paragraph or non-code-like blocks.
+            # Scan forward — collect consecutive code-like paragraphs.
+            # Also accept standalone brace lines (e.g. "}", "};") as valid
+            # continuations within an already-started code sequence.
             j = i + 1
             while j < len(page.blocks):
                 nxt = page.blocks[j]
                 if nxt.block_type != "paragraph" or not nxt.markdown:
                     break
-                if not _is_code_like(nxt.markdown):
+                if not _is_code_like(nxt.markdown) and not _is_brace_line(nxt.markdown):
                     break
                 j += 1
 
@@ -833,6 +834,12 @@ def _is_code_like(text: str) -> bool:
     if not re.search(r"[a-zA-Z]", stripped):
         return False
     return bool(_CODE_STMT_RE.search(stripped))
+
+
+def _is_brace_line(text: str) -> bool:
+    """Check if text is a standalone brace/bracket line (e.g. ``}``, ``};``, ``{``)."""
+    stripped = text.strip()
+    return bool(stripped) and bool(re.fullmatch(r"[{}\[\]();,]+", stripped))
 
 
 # ---------------------------------------------------------------------------

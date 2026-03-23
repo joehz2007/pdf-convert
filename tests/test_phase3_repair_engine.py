@@ -858,7 +858,38 @@ class TestMergeCodeLineParagraphs:
         assert "```" in code_blocks[0].markdown
         assert "encrypt" in code_blocks[0].markdown
         assert "Validate.notNull" in code_blocks[0].markdown
+        # The trailing "}" (brace-only line) must be included via _is_brace_line
+        assert "}" in code_blocks[0].markdown
         assert any(f.fix_type == "code_block_rebuilt" for f in fixes)
+
+    def test_brace_continuation_included(self):
+        """Standalone brace lines are included in code sequences via _is_brace_line."""
+        from md_format.repair_engine import _merge_code_line_paragraphs
+        from md_format.contracts import NormalizedBlock, NormalizedPage, NormalizedDocument, AutoFix
+
+        blocks = [
+            NormalizedBlock("paragraph", 1, 1, "p1", "try {", False),
+            NormalizedBlock("paragraph", 1, 2, "p2", "Validate.notNull(x);", False),
+            NormalizedBlock("paragraph", 1, 3, "p3", "return result;", False),
+            NormalizedBlock("paragraph", 1, 4, "p4", "}", False),
+            NormalizedBlock("paragraph", 1, 5, "p5", "};", False),
+        ]
+        doc = NormalizedDocument(
+            slice_file="test.pdf", display_title="", order_index=1,
+            start_page=1, end_page=1,
+            pages=[NormalizedPage(1, 1, False, blocks=blocks)],
+        )
+        fixes: list[AutoFix] = []
+        _merge_code_line_paragraphs(doc, fixes)
+
+        code_blocks = [b for b in doc.pages[0].blocks if b.block_type == "code" and b.markdown]
+        assert len(code_blocks) == 1
+        # All 5 lines merged, including brace-only lines
+        assert "try {" in code_blocks[0].markdown
+        assert "}" in code_blocks[0].markdown
+        assert "};" in code_blocks[0].markdown
+        assert len(fixes) == 1
+        assert "5" in fixes[0].message  # "Merged 5 code-like paragraphs"
 
     def test_non_code_paragraphs_not_merged(self):
         """Normal English paragraphs are not merged as code."""
@@ -925,6 +956,25 @@ class TestMergeCodeLineParagraphs:
         assert len(code_blocks) == 0
 
 
+class TestIsBraceLine:
+    """Test _is_brace_line for standalone brace/bracket lines."""
+
+    def test_single_brace(self):
+        from md_format.repair_engine import _is_brace_line
+        assert _is_brace_line("}")
+        assert _is_brace_line("{")
+        assert _is_brace_line("};")
+        assert _is_brace_line("});")
+        assert _is_brace_line("  }  ")
+
+    def test_not_brace(self):
+        from md_format.repair_engine import _is_brace_line
+        assert not _is_brace_line("try {")
+        assert not _is_brace_line("return x;")
+        assert not _is_brace_line("")
+        assert not _is_brace_line("abc")
+
+
 class TestIsCodeLike:
     """Test the _is_code_like heuristic."""
 
@@ -934,7 +984,8 @@ class TestIsCodeLike:
         assert _is_code_like("Validate.notNull(plainText);")
         assert _is_code_like("byte[] key = Hex.decodeHex(keyHex);")
         assert _is_code_like("return new String[]{result};")
-        # Lone brace without alpha chars is not classified as code
+        # Lone brace without alpha chars is not classified as code-like,
+        # but IS accepted as a brace continuation via _is_brace_line
         assert not _is_code_like("}")
         assert _is_code_like("try {")
         assert _is_code_like("} catch (Exception e) {")
@@ -971,7 +1022,24 @@ class TestPhase2JoinWithoutSpace:
 
     def test_pascal_single_word_joined(self):
         from pdf_extract.metadata_builder import should_join_without_space
+        # "complete" is common but "Time" alone is not in _PASCAL_COMMON_WORDS
+        # → only one side is common → still joined
         assert should_join_without_space("complete", "Time") is True
+
+    def test_pascal_both_common_words_not_joined(self):
+        from pdf_extract.metadata_builder import should_join_without_space
+        # Both tokens are common English words → false positive, must NOT join
+        assert should_join_without_space("Request", "Example") is False
+        assert should_join_without_space("Response", "Parameters") is False
+        assert should_join_without_space("Account", "Statement") is False
+        assert should_join_without_space("Order", "Details") is False
+        assert should_join_without_space("Payment", "Method") is False
+
+    def test_pascal_one_uncommon_still_joined(self):
+        from pdf_extract.metadata_builder import should_join_without_space
+        # One token is NOT a common word → likely a real identifier split
+        assert should_join_without_space("crypto", "Address") is True
+        assert should_join_without_space("beneficiary", "Name") is True
 
     def test_normal_text_not_joined(self):
         from pdf_extract.metadata_builder import should_join_without_space

@@ -739,6 +739,24 @@ def should_join_without_space(previous: str, current: str) -> bool:
         return False
     if any(marker in f"{prev_token}{current_token}" for marker in ("<", ">")):
         return True
+
+    # Detect camelCase identifier continuation:
+    # e.g. "cryptoAd" + "dressInfo" → join produces "cryptoAddressInfo" (has [a-z][A-Z])
+    if current_token[0].islower():
+        joined = prev_token + current_token
+        if re.search(r"[a-z][A-Z]", joined):
+            return True
+
+    # Detect PascalCase split when both lines are single-word tokens:
+    # e.g. "complete" + "Time" → join produces "completeTime"
+    if (current_token[0].isupper() and prev_token[-1].islower()
+            and previous.strip() == prev_token and current.strip() == current_token
+            and current_token.lower() not in INLINE_CONNECTORS
+            and len(prev_token) + len(current_token) <= 35):
+        joined = prev_token + current_token
+        if re.search(r"[a-z][A-Z]", joined):
+            return True
+
     return current_token[0].islower() and ((len(prev_token) >= 3 and len(current_token) <= 4) or (len(prev_token) == 1 and prev_token.isalpha()))
 
 

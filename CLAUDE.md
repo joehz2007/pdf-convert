@@ -1,38 +1,43 @@
 # PDF-Convert Project
 
 ## Overview
-Phase 1 of a multi-phase PDF-to-Markdown pipeline. This phase implements a **Python CLI tool** that splits large digital PDFs into structured sub-files based on chapter boundaries, page limits, and semantic integrity constraints.
+Multi-phase PDF-to-Markdown pipeline. Phase 1 splits PDFs, Phase 2 extracts content, Phase 3 formats Markdown, Phase 4 validates and merges into a single deliverable file.
 
 ## Tech Stack
 - **Language**: Python 3.10+
-- **Core Dependency**: PyMuPDF >= 1.23.0 (for `page.find_tables()` API)
-- **Testing**: pytest >= 8.0.0
-- **Deployment**: CLI script (`python split_pdf.py <input.pdf>`)
+- **Core Dependencies**: PyMuPDF >= 1.23.0, markdown-it-py == 3.0.0
+- **Testing**: pytest
+- **CLI Scripts**: `split_pdf.py` (Phase 1), `phase2_extract.py` (Phase 2), `phase3_format.py` (Phase 3), `phase4_merge.py` (Phase 4)
 
 ## Project Structure
 ```
-split_pdf.py              # CLI entry point (Orchestrator)
-pdf_slicer/
-  __init__.py             # Package exports
-  models.py               # ChapterNode, SlicePlan, RecognitionResult dataclasses
-  errors.py               # Custom exception hierarchy
-  log_utils.py            # Logging config & stage timing
-  document.py             # PyMuPDF wrapper (1-based page numbers)
-  recognizer.py           # Chapter recognition (TOC/bookmark or layout fallback)
-  semantic_analyzer.py    # Semantic block integrity detection (tables/code/paragraphs/figures)
-  split_planner.py        # Split strategy planner (merge/split/overlap injection)
-  writer.py               # PDF slicing output & manifest.json generation
+split_pdf.py              # Phase 1 CLI — PDF splitting
+phase2_extract.py         # Phase 2 CLI — content extraction
+phase3_format.py          # Phase 3 CLI — Markdown formatting
+phase4_merge.py           # Phase 4 CLI — validation, dedup & merge
+pdf_slicer/               # Phase 1 core
+src/
+  pdf_extract/            # Phase 2 core
+  md_format/              # Phase 3 core
+  md_merge/               # Phase 4 core
+    __init__.py
+    config.py             # Constants & defaults
+    contracts.py          # All dataclasses/enums (MergeTask, MergeBlockRef, DedupDecision, etc.)
+    errors.py             # Domain exceptions
+    manifest_loader.py    # Load & validate format_manifest.json
+    provenance_loader.py  # Load overlap provenance from content.json or markdown fallback
+    merge_planner.py      # Generate adjacent pairs & asset plans
+    overlap_resolver.py   # Overlap dedup with heading/code protection
+    asset_relinker.py     # Copy assets & rewrite image paths
+    stitcher.py           # Stitch slices into single markdown
+    postcheck.py          # Post-merge validation (headings, duplicates, assets)
+    writer.py             # Write final .md, merge_report.json, merge_manifest.json
+    pipeline.py           # Top-level orchestrator
 tests/
-  conftest.py             # PDF factory fixture
-  test_cli.py             # CLI integration test
-  test_document.py        # Document wrapper tests
-  test_recognizer.py      # Chapter recognition tests
-  test_semantic_analyzer.py # Semantic boundary detection tests
-  test_split_planner.py   # Planning logic tests
-  test_writer.py          # Output & manifest tests
+  test_phase4_*.py        # Phase 4 tests (72 tests)
 docs/
-  PRD-PDF切分需求.md       # Product Requirements Document (V1.3)
-  技术方案-PDF切分(Phase1).md # Technical Implementation Plan
+  技术方案-校验与拼接(Phase4).md
+  开发计划-校验与拼接(Phase4).md
 ```
 
 ## Key Design Decisions
@@ -43,8 +48,11 @@ docs/
 
 ## Commands
 ```bash
-# Run the tool
+# Phase 1: Split PDF
 python split_pdf.py <input.pdf> [--output-dir <dir>] [--max-pages 20] [--log-level INFO]
+
+# Phase 4: Merge chapter Markdown into single file
+python phase4_merge.py --input-dir <format_dir> [--output-dir <dir>] [--copy-assets] [--overwrite] [--fail-on-manual-review] [--allow-upstream-manual-review]
 
 # Run tests
 python -m pytest tests/ -q

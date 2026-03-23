@@ -41,6 +41,7 @@ class BlockNode:
     reading_order: int
     is_overlap: bool
     dedupe_key: str
+    heading_level: int | None = None
 
 
 @dataclass(slots=True)

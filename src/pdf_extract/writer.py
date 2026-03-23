@@ -87,6 +87,11 @@ def write_slice_result(
 def render_page_markdown(page: PageContent) -> str:
     markdown = (page.markdown or "").strip()
     complex_fragments = [fragment for table in page.tables if (fragment := render_complex_table_fragment(table))]
+
+    # Fallback: when pymupdf4llm returns empty text but blocks exist, rebuild from blocks
+    if not markdown and page.blocks:
+        markdown = _rebuild_markdown_from_blocks(page.blocks)
+
     if not markdown:
         return "\n\n".join(complex_fragments).strip()
 
@@ -105,6 +110,34 @@ def render_page_markdown(page: PageContent) -> str:
             rendered = rendered.rstrip()
             rendered = f"{rendered}\n\n{tail}" if rendered else tail
     return rendered.strip()
+
+
+def _rebuild_markdown_from_blocks(blocks: list) -> str:
+    """Rebuild markdown from BlockNode list when pymupdf4llm returns empty text."""
+    parts: list[str] = []
+    for block in blocks:
+        btype = getattr(block, "type", "paragraph")
+        text = getattr(block, "text", "").strip()
+        if not text:
+            continue
+        if btype == "heading":
+            # Detect level from text or default to ##
+            if text.startswith("#"):
+                parts.append(text)
+            else:
+                parts.append(f"## {text}")
+        elif btype == "code":
+            parts.append(f"```\n{text}\n```")
+        elif btype == "list_item":
+            parts.append(f"- {text}")
+        elif btype == "quote":
+            parts.append(f"> {text}")
+        elif btype in ("header", "footer"):
+            # Skip page headers/footers
+            continue
+        else:
+            parts.append(text)
+    return "\n\n".join(parts)
 
 
 def render_complex_table_fragment(table: TableNode) -> str:

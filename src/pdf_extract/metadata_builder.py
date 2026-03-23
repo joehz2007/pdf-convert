@@ -17,6 +17,11 @@ NUMBERED_LIST_RE = re.compile(r"^\d+[.)]\s")
 SECTION_HEADING_RE = re.compile(
     r"^(?:\d+(?:\.\d+){0,5}|[A-Za-z]\d+(?:\.\d+){0,5}|第[一二三四五六七八九十百千万]+[章节篇]|附录[A-Za-z0-9一二三四五六七八九十]*)[\s.:：、)）\-].+"
 )
+HEADING_NUM_RE = re.compile(r"^(\d+(?:\.\d+)*)")
+HEADING_ALPHA_NUM_RE = re.compile(r"^[A-Za-z](\d+(?:\.\d+)*)")
+HEADING_CHAPTER_RE = re.compile(r"^第[一二三四五六七八九十百千万]+[章篇]")
+HEADING_SECTION_RE = re.compile(r"^第[一二三四五六七八九十百千万]+节")
+HEADING_APPENDIX_RE = re.compile(r"^附录")
 CODE_KEYWORD_RE = re.compile(r"^(def|class|for|if|while|return|import|from|try|except|with)\b", re.IGNORECASE)
 CODE_MARKER_RE = re.compile(r"[:=(){}\[\].,]|->|=>")
 NESTED_SECTION_RE = re.compile(
@@ -165,6 +170,7 @@ def extract_text_blocks(
         if not text:
             continue
         bbox = round_bbox(block.get("bbox", (0, 0, 0, 0)))
+        font_size = _max_font_size(block)
         block_type = classify_block(
             text,
             block,
@@ -174,6 +180,9 @@ def extract_text_blocks(
             page_height=page_height,
             reading_order=reading_order,
         )
+        heading_level = None
+        if block_type == "heading":
+            heading_level = detect_heading_level(text, font_size=font_size, max_font_size=max_font_size)
         bbox_hash = build_bbox_hash(bbox)
         results.append(
             BlockNode(
@@ -184,6 +193,7 @@ def extract_text_blocks(
                 reading_order=reading_order,
                 is_overlap=is_overlap,
                 dedupe_key=build_dedupe_key(source_page, text, bbox_hash),
+                heading_level=heading_level,
             )
         )
     return results
@@ -583,6 +593,40 @@ def classify_block(
     return "paragraph"
 
 
+def detect_heading_level(text: str, *, font_size: float = 0, max_font_size: float = 0) -> int:
+    """Detect heading level (1-6) from section numbering patterns and font size."""
+    stripped = text.strip()
+
+    # Chinese chapter/appendix → H1
+    if HEADING_CHAPTER_RE.match(stripped) or HEADING_APPENDIX_RE.match(stripped):
+        return 1
+    # Chinese section → H2
+    if HEADING_SECTION_RE.match(stripped):
+        return 2
+
+    # Numbered sections: count dots → depth
+    m = HEADING_NUM_RE.match(stripped)
+    if m:
+        return min(m.group(1).count(".") + 1, 6)
+
+    # Letter-prefixed numbered sections (e.g. A1.2.3)
+    m = HEADING_ALPHA_NUM_RE.match(stripped)
+    if m:
+        return min(m.group(1).count(".") + 1, 6)
+
+    # Font-size ratio fallback
+    if max_font_size > 0 and font_size > 0:
+        ratio = font_size / max_font_size
+        if ratio >= 0.95:
+            return 1
+        if ratio >= 0.80:
+            return 2
+        if ratio >= 0.65:
+            return 3
+
+    return 2  # safe default
+
+
 def looks_like_heading(text: str, *, font_size: float, max_font_size: float) -> bool:
     if max_font_size <= 0 or font_size < 14 or font_size < max_font_size * 0.85 or len(text) > 120:
         return False
@@ -590,19 +634,39 @@ def looks_like_heading(text: str, *, font_size: float, max_font_size: float) -> 
     return bool(SECTION_HEADING_RE.match(stripped))
 
 
+CODE_FONT_TOKENS = (
+    "courier", "mono", "consolas", "code", "menlo", "source code",
+    "fira", "hack", "inconsolata", "dejavu", "liberation mono",
+    "roboto mono", "ubuntu mono", "cascadia", "jetbrains",
+    "lucida console", "andale mono", "noto mono",
+)
+
+
 def is_code_block(text: str, font_names: set[str]) -> bool:
-    if any(name for name in font_names if any(token in name for token in ("courier", "mono", "consolas", "code"))):
+    # Font check with expanded patterns
+    if any(name for name in font_names if any(token in name for token in CODE_FONT_TOKENS)):
         return True
 
     lines = [line for line in text.splitlines() if line.strip()]
     if len(lines) < 2:
         return False
-    if any(line.startswith(("    ", "\t")) for line in lines):
+
+    # Consistent indentation (>= 60% of lines)
+    indented_count = sum(1 for line in lines if line.startswith(("    ", "\t")))
+    if indented_count >= max(2, len(lines) * 0.6):
         return True
 
+    # Keywords + markers both present (original logic)
     keyword_lines = sum(1 for line in lines if CODE_KEYWORD_RE.match(line.strip()))
     marker_lines = sum(1 for line in lines if CODE_MARKER_RE.search(line))
-    return keyword_lines > 0 and marker_lines > 0
+    if keyword_lines > 0 and marker_lines > 0:
+        return True
+
+    # High density of code markers alone (brackets, operators, etc.)
+    if len(lines) >= 3 and marker_lines >= len(lines) * 0.7:
+        return True
+
+    return False
 
 
 def is_list_item(text: str) -> bool:

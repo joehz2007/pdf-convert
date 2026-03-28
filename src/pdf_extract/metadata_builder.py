@@ -98,19 +98,16 @@ def build_content_result(task: SliceTask, page_chunks: list[dict], *, slice_dir:
 
             source_page = task.start_page + expected_slice_page - 1
             markdown = str(chunk.get("text", "")).strip()
-            if not markdown:
-                warnings.append(f"empty_markdown_page:{source_page}")
+            is_overlap = source_page in task.overlap_pages
 
             page = document[expected_slice_page - 1]
             blocks = extract_text_blocks(
                 page,
                 source_page=source_page,
                 display_title=task.display_title,
-                is_overlap=source_page in task.overlap_pages,
+                is_overlap=is_overlap,
                 first_page=(expected_slice_page == 1),
             )
-            if markdown and not blocks:
-                warnings.append(f"no_blocks_page:{source_page}")
             suppressed_table_markdown = int(chunk.get("suppressed_table_markdown", 0) or 0)
             if suppressed_table_markdown > 0:
                 warnings.append(f"suppressed_broken_table_markdown:{source_page}:{suppressed_table_markdown}")
@@ -119,6 +116,7 @@ def build_content_result(task: SliceTask, page_chunks: list[dict], *, slice_dir:
                 page,
                 chunk,
                 source_page=source_page,
+                blocks=blocks,
                 assets_dir=assets_dir,
                 warnings=warnings,
             )
@@ -129,6 +127,18 @@ def build_content_result(task: SliceTask, page_chunks: list[dict], *, slice_dir:
                 page_width=float(page.rect.width),
                 page_height=float(page.rect.height),
                 warnings=warnings,
+            )
+            warnings.extend(
+                warning
+                for warning in collect_page_review_flags(
+                    source_page=source_page,
+                    markdown=markdown,
+                    blocks=blocks,
+                    tables=tables,
+                    images=images,
+                    is_overlap=is_overlap,
+                )
+                if warning not in warnings
             )
 
             assets.extend({"asset_path": image.asset_path, "source_page": source_page, "type": "image"} for image in images)
@@ -145,7 +155,7 @@ def build_content_result(task: SliceTask, page_chunks: list[dict], *, slice_dir:
                 PageContent(
                     slice_page=expected_slice_page,
                     source_page=source_page,
-                    is_overlap=source_page in task.overlap_pages,
+                    is_overlap=is_overlap,
                     markdown=markdown,
                     blocks=blocks,
                     tables=tables,
@@ -173,6 +183,39 @@ def build_content_result(task: SliceTask, page_chunks: list[dict], *, slice_dir:
         warnings=warnings,
         manual_review_required=task.manual_review_required or bool(warnings),
     )
+
+def collect_page_review_flags(
+    *,
+    source_page: int,
+    markdown: str,
+    blocks: list[BlockNode],
+    tables: list[TableNode],
+    images: list[ImageNode],
+    is_overlap: bool,
+) -> list[str]:
+    warnings: list[str] = []
+    normalized_markdown = normalize_text(markdown)
+    body_blocks = [block for block in blocks if block.type not in {"header", "footer"}]
+
+    if not normalized_markdown:
+        warnings.append(f"empty_markdown_page:{source_page}")
+    if normalized_markdown and not body_blocks and not tables and not images:
+        warnings.append(f"no_blocks_page:{source_page}")
+    if not normalized_markdown and (body_blocks or tables or images):
+        warnings.append(f"page_content_mismatch:{source_page}")
+
+    structured_chars = sum(len(normalize_text(block.text)) for block in body_blocks)
+    if normalized_markdown and structured_chars >= 80 and len(normalized_markdown) < max(20, int(structured_chars * 0.2)):
+        warnings.append(f"page_content_mismatch:{source_page}")
+
+    fallback_tables = [table for table in tables if table.fallback_html or table.fallback_image]
+    if fallback_tables:
+        warnings.append(f"table_render_fallback:{source_page}:{len(fallback_tables)}")
+
+    if is_overlap and any(not block.dedupe_key for block in body_blocks):
+        warnings.append(f"overlap_missing_dedupe_key:{source_page}")
+
+    return warnings
 
 
 def extract_text_blocks(
@@ -228,6 +271,7 @@ def extract_tables(
     chunk: dict,
     *,
     source_page: int,
+    blocks: list[BlockNode],
     assets_dir: Path | None,
     warnings: list[str],
 ) -> list[TableNode]:
@@ -257,6 +301,7 @@ def extract_tables(
                 fallback_used=fallback_used,
                 retry_pages=retry_pages,
                 complex_table=complex_table,
+                blocks=blocks,
                 assets_dir=assets_dir,
             )
         )
@@ -276,18 +321,27 @@ def build_table_nodes(
     fallback_used: bool,
     retry_pages: list[int],
     complex_table: bool,
+    blocks: list[BlockNode],
     assets_dir: Path | None,
 ) -> list[TableNode]:
     table_id = build_table_id(source_page, snapshot_index)
-    fallback_image = None
-    if complex_table and assets_dir is not None:
-        fallback_image = export_table_clip(page, bbox, assets_dir, source_page=source_page, table_index=snapshot_index)
-
+    headers, rows = normalize_table_structure(headers, rows, blocks)
     display_headers = normalize_table_headers(headers, rows)
     parent_rows, child_sections = split_nested_table_sections(rows)
     if complex_table and child_sections:
         child_ids = [f"{table_id}-c{child_index:02d}" for child_index in range(1, len(child_sections) + 1)]
         cleaned_parent_rows = clean_table_rows(display_headers, parent_rows)
+        parent_fallback_html = render_table_html(
+            headers=display_headers,
+            rows=cleaned_parent_rows,
+            table_id=table_id,
+            table_role="parent",
+            child_table_ids=child_ids,
+        )
+        parent_fallback_image = None
+        if parent_fallback_html is None and assets_dir is not None:
+            parent_fallback_image = export_table_clip(page, bbox, assets_dir, source_page=source_page, table_index=snapshot_index)
+
         nodes = [
             TableNode(
                 type="table",
@@ -299,22 +353,34 @@ def build_table_nodes(
                 headers=display_headers,
                 rows=cleaned_parent_rows,
                 markdown=None,
-                fallback_html=render_table_html(
-                    headers=display_headers,
-                    rows=cleaned_parent_rows,
-                    table_id=table_id,
-                    table_role="parent",
-                    child_table_ids=child_ids,
-                ),
-                fallback_image=fallback_image,
+                fallback_html=parent_fallback_html,
+                fallback_image=parent_fallback_image,
                 table_id=table_id,
                 table_role="parent",
                 child_table_ids=child_ids,
             )
         ]
+        # Extract first-column field names from parent for section title repair
+        parent_field_names = [
+            str(row[0]).strip() for row in cleaned_parent_rows
+            if row and str(row[0]).strip()
+        ]
         for child_index, section in enumerate(child_sections, start=1):
             child_id = f"{table_id}-c{child_index:02d}"
             cleaned_child_rows = clean_table_rows(display_headers, list(section["rows"]))
+            raw_title = normalize_section_title(str(section["title"]))
+            repaired_title = _repair_section_title_from_fields(raw_title, parent_field_names)
+            child_fallback_html = render_table_html(
+                headers=display_headers,
+                rows=cleaned_child_rows,
+                table_id=child_id,
+                table_role="child",
+                parent_table_id=table_id,
+                section_title=repaired_title,
+            )
+            child_fallback_image = None
+            if child_fallback_html is None and assets_dir is not None:
+                child_fallback_image = export_table_clip(page, bbox, assets_dir, source_page=source_page, table_index=snapshot_index)
             nodes.append(
                 TableNode(
                     type="table",
@@ -326,24 +392,31 @@ def build_table_nodes(
                     headers=display_headers,
                     rows=cleaned_child_rows,
                     markdown=None,
-                    fallback_html=render_table_html(
-                        headers=display_headers,
-                        rows=cleaned_child_rows,
-                        table_id=child_id,
-                        table_role="child",
-                        parent_table_id=table_id,
-                        section_title=normalize_section_title(str(section["title"])),
-                    ),
-                    fallback_image=fallback_image,
+                    fallback_html=child_fallback_html,
+                    fallback_image=child_fallback_image,
                     table_id=child_id,
                     parent_table_id=table_id,
                     table_role="child",
-                    section_title=normalize_section_title(str(section["title"])),
+                    section_title=repaired_title,
                 )
             )
         return nodes
 
     cleaned_rows = clean_table_rows(display_headers, rows)
+    fallback_html = (
+        render_table_html(
+            headers=display_headers,
+            rows=cleaned_rows,
+            table_id=table_id,
+            table_role="standalone",
+        )
+        if complex_table
+        else None
+    )
+    fallback_image = None
+    if complex_table and fallback_html is None and assets_dir is not None:
+        fallback_image = export_table_clip(page, bbox, assets_dir, source_page=source_page, table_index=snapshot_index)
+
     return [
         TableNode(
             type="table",
@@ -355,19 +428,11 @@ def build_table_nodes(
             headers=display_headers,
             rows=cleaned_rows,
             markdown=markdown,
-            fallback_html=render_table_html(
-                headers=display_headers,
-                rows=cleaned_rows,
-                table_id=table_id,
-                table_role="standalone",
-            )
-            if complex_table
-            else None,
+            fallback_html=fallback_html,
             fallback_image=fallback_image,
             table_id=table_id,
         )
     ]
-
 
 def split_nested_table_sections(rows: list[list]) -> tuple[list[list], list[dict[str, list[list] | str]]]:
     parent_rows: list[list] = []
@@ -414,6 +479,47 @@ def extract_section_title(row: list) -> str | None:
     if NESTED_SECTION_RE.search(primary):
         return primary
     return None
+
+
+def _repair_section_title_from_fields(title: str, parent_field_names: list[str]) -> str:
+    """Fix truncated field names in section titles by matching against parent fields.
+
+    Example: title = "sAccountList Details (...)" with parent field "subAccountList"
+    → returns "subAccountList Details (...)".
+    Uses longest common suffix matching.  Only replaces when the common suffix
+    covers ≥ 60% of the field name AND ≥ 60% of the title word (high confidence).
+    """
+    if not title or not parent_field_names:
+        return title
+    m = re.match(r"([A-Za-z][\w]*)", title)
+    if not m:
+        return title
+    title_word = m.group(1)
+    title_word_lower = title_word.lower()
+    best_field: str | None = None
+    best_suffix_len = 0
+    for field in parent_field_names:
+        field_lower = field.lower()
+        if field_lower == title_word_lower:
+            return title  # exact match, no repair needed
+        # Find longest common suffix between title_word and field
+        max_check = min(len(title_word_lower), len(field_lower))
+        suffix_len = 0
+        for k in range(1, max_check + 1):
+            if title_word_lower[-k] == field_lower[-k]:
+                suffix_len = k
+            else:
+                break
+        # Title word must be strictly shorter (truncation removes prefix chars)
+        if (len(title_word) < len(field)
+                and suffix_len >= len(field) * 0.6
+                and suffix_len >= len(title_word) * 0.6
+                and suffix_len > best_suffix_len):
+            best_field = field
+            best_suffix_len = suffix_len
+    if best_field:
+        return best_field + title[len(title_word):]
+    return title
 
 
 def normalize_section_title(value: str) -> str:
@@ -483,6 +589,66 @@ def normalize_table_headers(headers: list[str], rows: list[list]) -> list[str]:
             return PARAMETER_TABLE_HEADERS.copy()
     return cleaned_headers
 
+
+def normalize_table_structure(headers: list[str], rows: list[list], blocks: list[BlockNode]) -> tuple[list[str], list[list]]:
+    cleaned_headers = [normalize_cell_text(str(header or "")) for header in headers]
+    cleaned_rows = [[normalize_cell_text(str(cell or "")) for cell in row] for row in rows]
+    if not cleaned_headers:
+        return cleaned_headers, cleaned_rows
+    if should_demote_headers_to_first_row(cleaned_headers, cleaned_rows):
+        if cleaned_rows and row_matches_headers(cleaned_headers, cleaned_rows[0]):
+            return [], cleaned_rows
+        return [], [cleaned_headers, *cleaned_rows]
+    if should_drop_duplicate_headers(cleaned_headers, blocks):
+        return [], cleaned_rows
+    return cleaned_headers, cleaned_rows
+
+
+def should_demote_headers_to_first_row(headers: list[str], rows: list[list[str]]) -> bool:
+    if len(headers) < 2 or not rows:
+        return False
+    if looks_like_semantic_headers(headers) or looks_like_field_descriptor_row(headers):
+        return False
+
+    candidate_rows = rows[1:] if rows and row_matches_headers(headers, rows[0]) else rows
+    if not candidate_rows:
+        return False
+
+    header_label = parse_enumerated_row_label(headers[0])
+    first_row_label = parse_enumerated_row_label(candidate_rows[0][0] if candidate_rows[0] else "")
+    if header_label is None or first_row_label is None:
+        return False
+    if header_label[0] != first_row_label[0] or first_row_label[1] != header_label[1] + 1:
+        return False
+
+    if len(candidate_rows) >= 2:
+        second_row_label = parse_enumerated_row_label(candidate_rows[1][0] if candidate_rows[1] else "")
+        if second_row_label is None or second_row_label[0] != header_label[0] or second_row_label[1] != first_row_label[1] + 1:
+            return False
+
+    return len(normalize_text(headers[1])) >= 8
+
+
+def should_drop_duplicate_headers(headers: list[str], blocks: list[BlockNode]) -> bool:
+    if not headers or looks_like_semantic_headers(headers) or looks_like_field_descriptor_row(headers):
+        return False
+    header_text = normalize_text(" ".join(header for header in headers if header)).lower()
+    if len(header_text) < 12:
+        return False
+    body_texts = {
+        normalize_text(block.text).lower()
+        for block in blocks
+        if block.type not in {"header", "footer"} and normalize_text(block.text)
+    }
+    return header_text in body_texts
+
+
+def parse_enumerated_row_label(value: str) -> tuple[str, int] | None:
+    match = re.match(r"^([A-Za-z][A-Za-z _/-]{0,20}?)\s*(\d{1,3})\b", normalize_text(value))
+    if not match:
+        return None
+    prefix = normalize_text(match.group(1)).lower()
+    return prefix, int(match.group(2))
 
 def clean_table_rows(headers: list[str], rows: list[list]) -> list[list[str]]:
     cleaned_rows: list[list[str]] = []
@@ -603,7 +769,7 @@ def classify_block(
         return "heading"
     if looks_like_heading(text, font_size=font_size, max_font_size=max_font_size):
         return "heading"
-    if is_code_block(text, font_names):
+    if is_code_block(text, block):
         return "code"
     if is_list_item(text):
         return "list_item"
@@ -666,31 +832,80 @@ CODE_FONT_TOKENS = (
 )
 
 
-def is_code_block(text: str, font_names: set[str]) -> bool:
-    # Font check with expanded patterns
-    if any(name for name in font_names if any(token in name for token in CODE_FONT_TOKENS)):
-        return True
+_TOC_LINE_RE = re.compile(r"\.{3,}\s*\d+\s*$")
+# Unicode bullets may directly precede text; ASCII - and * require a space
+# to distinguish from shell flags (-X, -H) and glob patterns (*).
+_BULLET_PROSE_RE = re.compile(r"^(?:[•￮▪]\s*|[-*]\s+)[A-Z]")
 
+
+def _code_font_char_ratio(block: dict) -> tuple[int, int]:
+    """Return (code_font_chars, total_chars) from span-level font data."""
+    code_chars = 0
+    total_chars = 0
+    for line in block.get("lines", []):
+        for span in line.get("spans", []):
+            span_text = str(span.get("text", "")).strip()
+            char_count = len(span_text)
+            if not char_count:
+                continue
+            total_chars += char_count
+            font_name = str(span.get("font", "")).lower()
+            if any(token in font_name for token in CODE_FONT_TOKENS):
+                code_chars += char_count
+    return code_chars, total_chars
+
+
+def is_code_block(text: str, block: dict) -> bool:
+    """Multi-signal code block detection.
+
+    Scoring system:
+      - Font ratio signal:     0-3 points
+      - Structural signal:     0-3 points
+      - Negative pre-circuit:  immediately returns False
+
+    Threshold: total >= 3 to classify as code.
+    """
     lines = [line for line in text.splitlines() if line.strip()]
-    if len(lines) < 2:
-        return False
 
-    # Consistent indentation (>= 60% of lines)
-    indented_count = sum(1 for line in lines if line.startswith(("    ", "\t")))
-    if indented_count >= max(2, len(lines) * 0.6):
-        return True
+    # --- Negative pre-circuit: TOC / bullet prose ---
+    if lines:
+        toc_count = sum(1 for line in lines if _TOC_LINE_RE.search(line))
+        if toc_count >= max(1, len(lines) * 0.4):
+            return False
+        bullet_count = sum(1 for line in lines if _BULLET_PROSE_RE.match(line.strip()))
+        if bullet_count >= max(1, len(lines) * 0.5):
+            return False
 
-    # Keywords + markers both present (original logic)
-    keyword_lines = sum(1 for line in lines if CODE_KEYWORD_RE.match(line.strip()))
-    marker_lines = sum(1 for line in lines if CODE_MARKER_RE.search(line))
-    if keyword_lines > 0 and marker_lines > 0:
-        return True
+    # --- Signal 1: Font-based (span-level ratio + tiered minimum count) ---
+    # High ratio needs fewer absolute chars (short code line, fully monospace).
+    # Low ratio needs more chars to avoid noise from small Courier spans.
+    code_chars, total_chars = _code_font_char_ratio(block)
+    font_score = 0
+    if total_chars > 0:
+        ratio = code_chars / total_chars
+        if ratio >= 0.8 and code_chars >= 8:
+            font_score = 3
+        elif ratio >= 0.6 and code_chars >= 20:
+            font_score = 2
+        elif ratio >= 0.4 and code_chars >= 30:
+            font_score = 1
 
-    # High density of code markers alone (brackets, operators, etc.)
-    if len(lines) >= 3 and marker_lines >= len(lines) * 0.7:
-        return True
+    # --- Signal 2: Structural code patterns ---
+    structure_score = 0
+    if len(lines) >= 2:
+        indented_count = sum(1 for line in lines if line.startswith(("    ", "\t")))
+        if indented_count >= max(2, len(lines) * 0.6):
+            structure_score = 3
 
-    return False
+        keyword_lines = sum(1 for line in lines if CODE_KEYWORD_RE.match(line.strip()))
+        marker_lines = sum(1 for line in lines if CODE_MARKER_RE.search(line))
+        if keyword_lines > 0 and marker_lines > 0:
+            structure_score = max(structure_score, 3)
+        elif len(lines) >= 3 and marker_lines >= len(lines) * 0.7:
+            structure_score = max(structure_score, 2)
+
+    # --- Combined scoring ---
+    return (font_score + structure_score) >= 3
 
 
 def is_list_item(text: str) -> bool:
@@ -766,9 +981,14 @@ def should_join_without_space(previous: str, current: str) -> bool:
 
     # Detect camelCase identifier continuation:
     # e.g. "cryptoAd" + "dressInfo" → join produces "cryptoAddressInfo" (has [a-z][A-Z])
+    # Guard: the camelCase boundary must be NEAR the join point.  If both
+    # tokens already have their own internal camelCase (e.g. "cryptoMethod" +
+    # "cryptoAddressInfo"), they are separate identifiers, not fragments.
     if current_token[0].islower():
+        join_pos = len(prev_token)
         joined = prev_token + current_token
-        if re.search(r"[a-z][A-Z]", joined):
+        neighborhood = joined[max(0, join_pos - 3):join_pos + 3]
+        if re.search(r"[a-z][A-Z]", neighborhood):
             return True
 
     # Detect PascalCase split when both lines are single-word tokens:
@@ -786,7 +1006,13 @@ def should_join_without_space(previous: str, current: str) -> bool:
             if re.search(r"[a-z][A-Z]", joined):
                 return True
 
-    return current_token[0].islower() and ((len(prev_token) >= 3 and len(current_token) <= 4) or (len(prev_token) == 1 and prev_token.isalpha()))
+    # Short-fragment fallback: e.g. "respons" + "e", "lis" + "t"
+    # Exclude common English words (prepositions, conjunctions) to prevent
+    # "used"+"for" → "usedfor" or "Array"+"of" → "Arrayof".
+    return (current_token[0].islower()
+            and current_token.lower() not in INLINE_CONNECTORS
+            and ((len(prev_token) >= 3 and len(current_token) <= 3)
+                 or (len(prev_token) == 1 and prev_token.isalpha())))
 
 
 def should_join_with_space(previous: str, current: str) -> bool:
@@ -893,3 +1119,12 @@ def build_dedupe_key(source_page: int, text: str, bbox_hash: str = "") -> str:
 def _max_font_size(block: dict) -> float:
     sizes = [float(span.get("size", 0.0)) for line in block.get("lines", []) for span in line.get("spans", [])]
     return max(sizes, default=0.0)
+
+
+
+
+
+
+
+
+

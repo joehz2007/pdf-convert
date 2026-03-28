@@ -943,6 +943,31 @@ class TestMergeCodeLineParagraphs:
         _merge_code_line_paragraphs(doc, fixes)
         assert len(fixes) == 0
 
+    def test_brace_led_json_merged(self):
+        """A JSON block starting with standalone { must be fully merged."""
+        from md_format.repair_engine import _merge_code_line_paragraphs
+        from md_format.contracts import NormalizedBlock, NormalizedPage, NormalizedDocument, AutoFix
+
+        blocks = [
+            NormalizedBlock("paragraph", 1, 1, "p1", "{", False),
+            NormalizedBlock("paragraph", 1, 2, "p2", '"code": "200",', False),
+            NormalizedBlock("paragraph", 1, 3, "p3", '"msg": "OK"', False),
+            NormalizedBlock("paragraph", 1, 4, "p4", "}", False),
+        ]
+        doc = NormalizedDocument(
+            slice_file="test.pdf", display_title="", order_index=1,
+            start_page=1, end_page=1,
+            pages=[NormalizedPage(1, 1, False, blocks=blocks)],
+        )
+        fixes: list[AutoFix] = []
+        _merge_code_line_paragraphs(doc, fixes)
+
+        code_blocks = [b for b in doc.pages[0].blocks if b.block_type == "code"]
+        assert len(code_blocks) == 1
+        assert '"code": "200",' in code_blocks[0].markdown
+        assert "{" in code_blocks[0].markdown
+        assert "}" in code_blocks[0].markdown
+
     def test_image_breaks_code_sequence(self):
         """An image block between code-like paragraphs breaks the sequence."""
         from md_format.repair_engine import _merge_code_line_paragraphs

@@ -4,7 +4,7 @@ import base64
 
 import pymupdf
 
-from pdf_extract.assets_exporter import export_page_images, export_table_clip
+from pdf_extract.assets_exporter import export_page_images, export_table_clip, resolve_image_payload
 
 PNG_BYTES = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j2mQAAAAASUVORK5CYII=")
 
@@ -28,6 +28,35 @@ def test_assets_exporter_writes_page_images(create_pdf, tmp_path):
     assert len(exported) == 1
     assert exported[0].asset_path == "assets/p0003_img01.png"
     assert (tmp_path / exported[0].asset_path).exists()
+
+
+def test_assets_exporter_falls_back_to_png_for_unsupported_format(create_pdf):
+    pdf_path = create_pdf(
+        "assets-unsupported.pdf",
+        pages=[
+            {
+                "images": [{"rect": (100, 100, 180, 180), "stream": PNG_BYTES}],
+            }
+        ],
+    )
+
+    document = pymupdf.open(str(pdf_path))
+    try:
+        asset_name, asset_bytes = resolve_image_payload(
+            document,
+            document[0],
+            int(document[0].get_images(full=True)[0][0]),
+            {"image": PNG_BYTES, "ext": "jbig2", "width": 1, "height": 1},
+            document[0].get_image_rects(int(document[0].get_images(full=True)[0][0])),
+            source_page=7,
+            index=1,
+            ext="jbig2",
+        )
+    finally:
+        document.close()
+
+    assert asset_name == "p0007_img01.png"
+    assert asset_bytes.startswith(b"\x89PNG")
 
 
 def test_assets_exporter_continues_when_one_image_fails(tmp_path):

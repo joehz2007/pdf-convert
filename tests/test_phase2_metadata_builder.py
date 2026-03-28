@@ -7,7 +7,7 @@ import pytest
 from pdf_extract.contracts import BlockNode, ImageNode, SliceTask, TableNode
 from pdf_extract.errors import EmptyExtractionError, PageMappingError
 from pdf_extract.markdown_extractor import extract_markdown_chunks
-from pdf_extract.metadata_builder import apply_inline_clause_breaks, build_content_result, build_dedupe_key, classify_block, format_description_text, is_complex_table, normalize_cell_text, normalize_section_title
+from pdf_extract.metadata_builder import _repair_section_title_from_fields, apply_inline_clause_breaks, build_content_result, build_dedupe_key, classify_block, format_description_text, is_code_block, is_complex_table, normalize_cell_text, normalize_section_title
 
 PNG_BYTES = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j2mQAAAAASUVORK5CYII=")
 
@@ -66,6 +66,7 @@ def test_metadata_builder_marks_manual_review_for_empty_chunk(create_pdf):
     assert result.manual_review_required is True
     assert any(item.startswith("empty_markdown_page:2") for item in result.warnings)
 
+    assert any(item.startswith("page_content_mismatch:2") for item in result.warnings)
 
 def test_metadata_builder_extracts_tables_and_images(create_pdf, tmp_path):
     pdf_path = create_pdf(
@@ -265,8 +266,10 @@ def test_metadata_builder_splits_nested_tables_into_parent_and_child(create_pdf,
     assert parent.child_table_ids == [child.table_id]
     assert child.section_title == "Transfers description (Objects of Transfers)"
     assert parent.fallback_html is not None and 'data-table-role="parent"' in parent.fallback_html
+    assert parent.fallback_image is None
     assert "array of objects" in parent.fallback_html
     assert child.fallback_html is not None and 'data-parent-table-id="p0001-t01"' in child.fallback_html
+    assert child.fallback_image is None
     assert "complex_table:1:1" in result.warnings
 
 
@@ -420,3 +423,186 @@ def test_normalize_cell_text_preserves_clause_breaks():
     assert "\n" in normalize_cell_text("Country code\nCharacter limit: 2\nUnsupported country code:")
     parts = normalize_cell_text("Country code\nCharacter limit: 2\nUnsupported country code:").split("\n")
     assert len(parts) == 3
+
+
+# ---------------------------------------------------------------------------
+# Regression: is_code_block scoring
+# ---------------------------------------------------------------------------
+
+
+def test_short_monospace_code_detected_as_code():
+    """Short single-line code in a monospace font must be classified as code."""
+    for text in ("return x;", "const x = 1;"):
+        block = {"lines": [{"spans": [{"text": text, "font": "Courier New", "size": 10}]}]}
+        assert is_code_block(text, block), f"{text!r} should be code"
+
+
+def test_curl_flags_not_blocked_as_bullet_prose():
+    """Multi-line curl with -X / -H flags must not be rejected by bullet-prose pre-circuit."""
+    block = {
+        "lines": [
+            {"spans": [{"text": "curl https://api.example.com \\", "font": "Courier", "size": 10}]},
+            {"spans": [{"text": "  -X POST \\", "font": "Courier", "size": 10}]},
+            {"spans": [{"text": '  -H "Content-Type: application/json"', "font": "Courier", "size": 10}]},
+        ],
+    }
+    text = 'curl https://api.example.com \\\n  -X POST \\\n  -H "Content-Type: application/json"'
+    assert is_code_block(text, block)
+
+
+# ---------------------------------------------------------------------------
+# Regression: section title repair
+# ---------------------------------------------------------------------------
+
+
+def test_repair_section_title_truncated():
+    """Truncated prefix (sAccountList → subAccountList) should be repaired."""
+    assert _repair_section_title_from_fields(
+        "sAccountList Details (objects of AccountList)",
+        ["accountId", "createTime", "subAccountList"],
+    ) == "subAccountList Details (objects of AccountList)"
+
+
+def test_repair_section_title_equal_length_not_repaired():
+    """Equal-length typo must NOT be corrected — only strict truncation."""
+    assert _repair_section_title_from_fields(
+        "xankAddress Details",
+        ["bankAddress"],
+    ) == "xankAddress Details"
+
+
+
+def test_metadata_builder_drops_duplicate_sentence_header_from_complex_table(create_pdf):
+    pdf_path = create_pdf(
+        "metadata-duplicate-header.pdf",
+        pages=[{"body": "request), the body can be omitted."}],
+    )
+    task = SliceTask(
+        slice_number=1,
+        slice_file=pdf_path.name,
+        source_path=pdf_path,
+        display_title="Duplicate Header",
+        start_page=1,
+        end_page=1,
+    )
+    chunks = extract_markdown_chunks(pdf_path)
+    chunks[0]["table_snapshots"] = [
+        {
+            "bbox": [10, 20, 300, 200],
+            "headers": ["request),", "the body can be omitted."],
+            "rows": [
+                [
+                    "Step 1",
+                    "Construct a message according to the following pseudo-grammar: ‘X-\nTimestamp’ + nonce + BODY{\"key1\":\"value1\",\"key2\":\"value2\"}",
+                ],
+                [
+                    "Step 2",
+                    "Calculate an HMAC with the message string you just created, your API secret as the key, and SHA256 as the hash algorithm",
+                ],
+            ],
+            "markdown": "|request),|the body can be omitted.|\n|---|---|\n|Step 1|Construct a message according to the following pseudo-grammar: ‘X-<br>Timestamp’ + nonce + BODY{\"key1\":\"value1\",\"key2\":\"value2\"}|\n|Step 2|Calculate an HMAC with the message string you just created, your API secret as the key, and SHA256 as the hash algorithm|",
+        }
+    ]
+
+    result = build_content_result(task, chunks)
+
+    table = result.source_pages[0].tables[0]
+    assert table.headers == []
+    assert table.rows[0][0] == "Step 1"
+    assert table.fallback_html is not None
+    assert "<thead>" not in table.fallback_html
+    assert "<th>request),</th>" not in table.fallback_html
+
+
+
+def test_metadata_builder_demotes_step_header_into_first_row(create_pdf):
+    pdf_path = create_pdf(
+        "metadata-step-header.pdf",
+        pages=[{"body": "Encrypted request flow."}],
+    )
+    task = SliceTask(
+        slice_number=1,
+        slice_file=pdf_path.name,
+        source_path=pdf_path,
+        display_title="Step Header",
+        start_page=1,
+        end_page=1,
+    )
+    chunks = extract_markdown_chunks(pdf_path)
+    chunks[0]["table_snapshots"] = [
+        {
+            "bbox": [10, 20, 300, 220],
+            "headers": [
+                "Step 1",
+                "Derive a SubKey using both:\n• X-Timestamp\n• API secret",
+            ],
+            "rows": [
+                [
+                    "Step 2",
+                    "Generate an x-merchant-iv (12-byte random IV), this must be provided in the request header later",
+                ],
+                [
+                    "Step 3",
+                    "Use AES-GCM method to encrypt the request body (encoded in Base64)",
+                ],
+            ],
+            "markdown": "",
+        }
+    ]
+
+    result = build_content_result(task, chunks)
+
+    table = result.source_pages[0].tables[0]
+    assert table.headers == []
+    assert [row[0] for row in table.rows] == ["Step 1", "Step 2", "Step 3"]
+    assert table.fallback_html is not None
+    assert "<thead>" not in table.fallback_html
+    assert "<td>Step 1</td>" in table.fallback_html
+
+
+def test_metadata_builder_demotes_step_header_when_first_row_duplicates_header(create_pdf):
+    pdf_path = create_pdf(
+        "metadata-step-header-duplicate-row.pdf",
+        pages=[{"body": "Encrypted request flow."}],
+    )
+    task = SliceTask(
+        slice_number=1,
+        slice_file=pdf_path.name,
+        source_path=pdf_path,
+        display_title="Step Header Duplicate Row",
+        start_page=1,
+        end_page=1,
+    )
+    chunks = extract_markdown_chunks(pdf_path)
+    chunks[0]["table_snapshots"] = [
+        {
+            "bbox": [10, 20, 300, 220],
+            "headers": [
+                "Step 1",
+                "Derive a SubKey using both:\n• X-Timestamp\n• API secret",
+            ],
+            "rows": [
+                [
+                    "Step 1",
+                    "Derive a SubKey using both:\n• X-Timestamp\n• API secret",
+                ],
+                [
+                    "Step 2",
+                    "Generate an x-merchant-iv (12-byte random IV), this must be provided in the request header later",
+                ],
+                [
+                    "Step 3",
+                    "Use AES-GCM method to encrypt the request body (encoded in Base64)",
+                ],
+            ],
+            "markdown": "",
+        }
+    ]
+
+    result = build_content_result(task, chunks)
+
+    table = result.source_pages[0].tables[0]
+    assert table.headers == []
+    assert [row[0] for row in table.rows] == ["Step 1", "Step 2", "Step 3"]
+    assert table.fallback_html is not None
+    assert "<thead>" not in table.fallback_html

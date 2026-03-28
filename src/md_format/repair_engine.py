@@ -79,6 +79,8 @@ _CODE_STMT_RE = re.compile(
     r"|^\s*//|/\*|\*/"                 # comments
     r"|=\s*(?:new|null|true|false|\"|\d)"  # assignments
     r"|^\s*\*\s+@"                     # javadoc params
+    r"|^\s*\"[\w-]+\"\s*:"             # JSON key-value: "key":
+    r"|^\s*[\[\]]\s*$"                 # standalone [ or ]
     r")"
 )
 
@@ -813,6 +815,10 @@ def _merge_code_line_paragraphs(
     When Phase 2 extracts code from a PDF, each line of code often becomes
     a separate paragraph block.  This pass detects sequences of 3+ consecutive
     code-like paragraphs and merges them into a single fenced code block.
+
+    For JSON-like content, lines that are not individually code-like are still
+    accepted if they sit within a ``{ … }`` or ``[ … ]`` bracket context
+    opened by a preceding code-like line.
     """
     for page in doc.pages:
         i = 0
@@ -821,21 +827,30 @@ def _merge_code_line_paragraphs(
             if block.block_type != "paragraph" or not block.markdown:
                 i += 1
                 continue
-            if not _is_code_like(block.markdown):
+            if not _is_code_like(block.markdown) and not _is_brace_line(block.markdown):
                 i += 1
                 continue
 
             # Scan forward — collect consecutive code-like paragraphs.
             # Also accept standalone brace lines (e.g. "}", "};") as valid
             # continuations within an already-started code sequence.
+            # Track bracket depth so that non-code-like lines inside a JSON
+            # object/array are still included.
             j = i + 1
+            bracket_depth = _bracket_delta(block.markdown)
             while j < len(page.blocks):
                 nxt = page.blocks[j]
                 if nxt.block_type != "paragraph" or not nxt.markdown:
                     break
-                if not _is_code_like(nxt.markdown) and not _is_brace_line(nxt.markdown):
+                nxt_text = nxt.markdown
+                if _is_code_like(nxt_text) or _is_brace_line(nxt_text):
+                    bracket_depth += _bracket_delta(nxt_text)
+                    j += 1
+                elif bracket_depth > 0 and _is_json_context_line(nxt_text):
+                    bracket_depth += _bracket_delta(nxt_text)
+                    j += 1
+                else:
                     break
-                j += 1
 
             count = j - i
             if count >= 3:
@@ -872,6 +887,36 @@ def _is_brace_line(text: str) -> bool:
     """Check if text is a standalone brace/bracket line (e.g. ``}``, ``};``, ``{``)."""
     stripped = text.strip()
     return bool(stripped) and bool(re.fullmatch(r"[{}\[\]();,]+", stripped))
+
+
+def _bracket_delta(text: str) -> int:
+    """Return net bracket depth change for ``{``, ``}``, ``[``, ``]``."""
+    return text.count("{") + text.count("[") - text.count("}") - text.count("]")
+
+
+_JSON_CONTEXT_LINE_RE = re.compile(
+    r"^\s*("
+    r"\"[\w-]+\"\s*:"          # "key": value
+    r"|[\w]+\s*:"              # bare key: value (YAML-ish)
+    r"|\d[\d.,]*\s*,?\s*$"    # numeric value line
+    r"|\"[^\"]*\"\s*,?\s*$"   # string value line
+    r"|true|false|null"        # JSON literals
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _is_json_context_line(text: str) -> bool:
+    """Check if a line looks like JSON/structured-data content.
+
+    This is a weaker check than ``_is_code_like`` — it only fires when the
+    caller has already established that the line sits inside a bracket
+    context (``{ … }`` or ``[ … ]``).
+    """
+    stripped = text.strip()
+    if not stripped or len(stripped) > 200:
+        return False
+    return bool(_JSON_CONTEXT_LINE_RE.search(stripped))
 
 
 # ---------------------------------------------------------------------------
@@ -1028,9 +1073,14 @@ def _rejoin_split_identifiers(text: str) -> str:
         joined_pair = False
 
         # Case 1: right starts lowercase (e.g. "cryptoAd" + "dressInfo")
+        # Guard: camelCase boundary must be near the join point, not just
+        # anywhere in the joined string (prevents merging two complete
+        # identifiers like "cryptoMethod" + "cryptoAddressInfo").
         if right[0].islower():
+            join_pos = len(left)
             joined = left + right
-            if re.search(r"[a-z][A-Z]", joined):
+            neighborhood = joined[max(0, join_pos - 5):join_pos + 5]
+            if re.search(r"[a-z][A-Z]", neighborhood):
                 words[i] = joined
                 words.pop(i + 1)
                 joined_pair = True

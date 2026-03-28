@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from pdf_extract.errors import MissingSliceError
+from pdf_extract.errors import InvalidManifestError, MissingSliceError
 from pdf_extract.manifest_loader import load_manifest
 
 
@@ -66,4 +66,53 @@ def test_manifest_loader_rejects_missing_slice(tmp_path):
     )
 
     with pytest.raises(MissingSliceError):
+        load_manifest(manifest_path)
+
+
+def test_manifest_loader_rejects_actual_pages_mismatch(create_phase2_manifest):
+    manifest_path = create_phase2_manifest(
+        "phase2-actual-pages-mismatch",
+        [
+            {
+                "filename": "Chapter 1 Overview（1-2）.pdf",
+                "pages": [
+                    {"heading": "Chapter 1 Overview", "body": "page one"},
+                    {"body": "page two"},
+                ],
+                "start_page": 1,
+                "end_page": 2,
+                "display_title": "Chapter 1 Overview",
+            }
+        ],
+    )
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    payload["slices"][0]["actual_pages"] = 3
+    manifest_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    with pytest.raises(InvalidManifestError, match="actual_pages=3"):
+        load_manifest(manifest_path)
+
+
+def test_manifest_loader_rejects_pdf_page_count_mismatch(create_phase2_manifest):
+    manifest_path = create_phase2_manifest(
+        "phase2-pdf-pages-mismatch",
+        [
+            {
+                "filename": "Chapter 1 Overview（1-2）.pdf",
+                "pages": [
+                    {"heading": "Chapter 1 Overview", "body": "page one"},
+                    {"body": "page two"},
+                ],
+                "start_page": 1,
+                "end_page": 2,
+                "display_title": "Chapter 1 Overview",
+            }
+        ],
+    )
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    payload["slices"][0]["actual_pages"] = 1
+    payload["slices"][0]["end_page"] = 1
+    manifest_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    with pytest.raises(InvalidManifestError, match="manifest=1, pdf=2"):
         load_manifest(manifest_path)

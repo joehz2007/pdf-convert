@@ -14,7 +14,7 @@
 - 支持：数字原生 PDF、带可提取文本层的 PDF
 - 不支持：纯扫描 PDF、无有效文本层 PDF、需要 OCR 才能读取正文的 PDF
 
-对于不支持输入，Phase 2 应直接终止并输出明确错误，不生成部分结果。
+对于不支持输入，Phase 2 应在切片级记录明确错误并继续处理其他切片；失败切片不生成该切片产物，但整批任务仍输出 `extract_manifest.json` 用于汇总状态。
 
 ---
 
@@ -121,7 +121,7 @@ content.json + same-name .md + assets + extract_manifest.json
 1. 读取 `manifest.json` 与切片文件列表
 2. 校验切片文件存在性、页码范围、重叠页合法性
 3. 对每个切片执行文本层预检
-4. 若切片无有效文本层，则判定为当前版本不支持输入并终止该任务
+4. 若切片无有效文本层，则判定该切片为当前版本不支持输入，记录失败状态并继续处理其他切片
 5. 使用 PyMuPDF4LLM 生成按页切分的 Markdown chunks
 6. 将 page chunks 交给 `metadata_builder`，由其基于 PyMuPDF 逐页补充块级元数据、表格结构、图片资源信息，并合流为统一的 `ContentResult`
 7. `writer.py` 仅消费 `ContentResult`，写出 `content.json`、同名 `.md`、`assets/`
@@ -721,8 +721,8 @@ dedupe_key = source_page + normalized_text_hash + bbox_hash
    - 校验图注绑定
 
 3. **无文本层扫描切片**
-   - 应明确终止
-   - 不生成部分输出
+   - 该切片应明确失败并写入 `extract_manifest.json`
+   - 失败切片不生成该切片产物，其他切片不受影响
    - 错误信息应指出当前版本不支持 OCR 场景
 
 ### 11.3 人工验收项
@@ -786,3 +786,5 @@ dedupe_key = source_page + normalized_text_hash + bbox_hash
 
 - PyMuPDF4LLM API 官方文档  
   https://pymupdf.readthedocs.io/en/latest/pymupdf4llm/api.html
+
+

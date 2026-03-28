@@ -222,3 +222,36 @@ def test_writer_builds_failure_record_with_error_code(create_pdf):
     assert record.error_code == "unsupported_input"
     assert record.stage_timings["precheck_ms"] == 9
     assert record.stage_timings["total_ms"] == 9
+
+
+def test_render_page_markdown_replaces_complex_table_markdown_with_fallback_html():
+    table_markdown = "|Step 1|Derive key|\n|---|---|\n|Step 2|Submit request|"
+    page = PageContent(
+        slice_page=1,
+        source_page=1,
+        is_overlap=False,
+        markdown=f"before\n\n{table_markdown}\n\nafter",
+        blocks=[],
+        tables=[
+            TableNode(
+                type="table",
+                source_page=1,
+                bbox=[0, 0, 10, 10],
+                table_strategy_used="lines",
+                table_fallback_used=True,
+                headers=[],
+                rows=[["Step 1", "Derive key"], ["Step 2", "Submit request"]],
+                markdown=table_markdown,
+                fallback_html="<div data-table-role=\"standalone\"><table><tbody><tr><td>Step 1</td><td>Derive key</td></tr><tr><td>Step 2</td><td>Submit request</td></tr></tbody></table></div>",
+                fallback_image=None,
+                table_id="p0001-t01",
+            )
+        ],
+        images=[],
+    )
+
+    rendered = render_page_markdown(page)
+
+    assert table_markdown not in rendered
+    assert 'data-table-role="standalone"' in rendered
+    assert rendered.index("before") < rendered.index('data-table-role="standalone"') < rendered.index("after")

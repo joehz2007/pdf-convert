@@ -86,31 +86,42 @@ def write_slice_result(
 
 def render_page_markdown(page: PageContent) -> str:
     markdown = (page.markdown or "").strip()
-    complex_fragments = [fragment for table in page.tables if (fragment := render_complex_table_fragment(table))]
+    complex_tables: list[tuple[str, str]] = []
+    for table in page.tables:
+        fragment = render_complex_table_fragment(table)
+        if not fragment:
+            continue
+        complex_tables.append(((table.markdown or "").strip(), fragment))
 
     # Fallback: when pymupdf4llm returns empty text but blocks exist, rebuild from blocks
     if not markdown and page.blocks:
         markdown = _rebuild_markdown_from_blocks(page.blocks)
 
     if not markdown:
-        return "\n\n".join(complex_fragments).strip()
+        return "\n\n".join(fragment for _, fragment in complex_tables).strip()
 
     rendered = markdown
+    remaining_fragments: list[str] = []
+    for table_markdown, fragment in complex_tables:
+        if table_markdown and table_markdown in rendered:
+            rendered = rendered.replace(table_markdown, fragment, 1)
+        else:
+            remaining_fragments.append(fragment)
+
     used = 0
-    while TABLE_FALLBACK_PLACEHOLDER in rendered and used < len(complex_fragments):
-        rendered = rendered.replace(TABLE_FALLBACK_PLACEHOLDER, complex_fragments[used], 1)
+    while TABLE_FALLBACK_PLACEHOLDER in rendered and used < len(remaining_fragments):
+        rendered = rendered.replace(TABLE_FALLBACK_PLACEHOLDER, remaining_fragments[used], 1)
         used += 1
 
     if TABLE_FALLBACK_PLACEHOLDER in rendered:
         rendered = rendered.replace(TABLE_FALLBACK_PLACEHOLDER, "")
 
-    if used < len(complex_fragments):
-        tail = "\n\n".join(complex_fragments[used:]).strip()
+    if used < len(remaining_fragments):
+        tail = "\n\n".join(remaining_fragments[used:]).strip()
         if tail:
             rendered = rendered.rstrip()
             rendered = f"{rendered}\n\n{tail}" if rendered else tail
     return rendered.strip()
-
 
 def _rebuild_markdown_from_blocks(blocks: list) -> str:
     """Rebuild markdown from BlockNode list when pymupdf4llm returns empty text."""

@@ -59,7 +59,7 @@ class FormatTask:
     order_index: int
     input_dir: Path
     content_file: Path
-    draft_md_file: Path
+    draft_md_file: Path | None
     assets_dir: Path
     phase2_manual_review_required: bool
     start_page: int = 0

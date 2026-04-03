@@ -155,3 +155,64 @@ class TestResolveOverlaps:
         assert decisions[0].removed_count == 1
         # Code block fully removed from right, not truncated
         assert code not in contents["s2.pdf"]
+
+    def test_repeated_overlap_heading_is_deduped(self, tmp_path):
+        heading = "# 8.8.2 Confirm Order"
+        t1 = _task(tmp_path, 1, 1, 23, "s1", f"{heading}\n\nBody.\n")
+        t2 = _task(tmp_path, 2, 23, 23, "s2", f"{heading}\n\nMore body.\n")
+
+        left_heading = _block(heading, block_type="heading", page=23, is_overlap=True, dedupe_key="h23")
+        right_heading = _block(heading, block_type="heading", page=23, is_overlap=True, dedupe_key="h23")
+
+        prov = {
+            "s1.pdf": SliceProvenance(t1, [], [left_heading], [left_heading]),
+            "s2.pdf": SliceProvenance(t2, [right_heading], [], [right_heading]),
+        }
+        pairs = [AdjacentPair(t1, t2, 0, 1)]
+        warnings: list[MergeWarning] = []
+
+        decisions, contents = resolve_overlaps([t1, t2], prov, pairs, warnings)
+
+        assert decisions[0].removed_count == 1
+        assert contents["s2.pdf"].count(heading) == 0
+
+    def test_repeated_boundary_heading_with_markdown_fallback_is_deduped(self, tmp_path):
+        left_heading_text = "### 8.8.2 Confirm Order"
+        right_heading_text = "# 8.8.2 Confirm Order"
+        t1 = _task(tmp_path, 1, 1, 23, "s1", f"{left_heading_text}\n\nBody.\n")
+        t2 = _task(tmp_path, 2, 23, 23, "s2", f"{right_heading_text}\n\nMore body.\n")
+
+        left_heading = _block(left_heading_text, block_type="heading", page=1)
+        right_heading = _block(right_heading_text, block_type="heading", page=23)
+
+        prov = {
+            "s1.pdf": SliceProvenance(t1, [], [left_heading], [left_heading]),
+            "s2.pdf": SliceProvenance(t2, [right_heading], [], [right_heading]),
+        }
+        pairs = [AdjacentPair(t1, t2, 0, 1)]
+        warnings: list[MergeWarning] = []
+
+        decisions, contents = resolve_overlaps([t1, t2], prov, pairs, warnings)
+
+        assert decisions[0].removed_count == 1
+        assert contents["s2.pdf"].count(right_heading_text) == 0
+
+    def test_repeated_boundary_paragraph_with_markdown_fallback_is_deduped(self, tmp_path):
+        paragraph = "Request Parameters:"
+        t1 = _task(tmp_path, 1, 1, 23, "s1", f"{paragraph}\n")
+        t2 = _task(tmp_path, 2, 23, 23, "s2", f"{paragraph}\n\nMore body.\n")
+
+        left_block = _block(paragraph, block_type="paragraph", page=1)
+        right_block = _block(paragraph, block_type="paragraph", page=23)
+
+        prov = {
+            "s1.pdf": SliceProvenance(t1, [], [left_block], [left_block]),
+            "s2.pdf": SliceProvenance(t2, [right_block], [], [right_block]),
+        }
+        pairs = [AdjacentPair(t1, t2, 0, 1)]
+        warnings: list[MergeWarning] = []
+
+        decisions, contents = resolve_overlaps([t1, t2], prov, pairs, warnings)
+
+        assert decisions[0].removed_count == 1
+        assert contents["s2.pdf"].count(paragraph) == 0

@@ -27,7 +27,7 @@ class AuditResult:
 
 def audit_coverage(
     content_data: dict[str, Any],
-    draft_markdown: str,
+    draft_markdown: str | None,
 ) -> AuditResult:
     """Run completeness audit on draft Markdown against content.json.
 
@@ -62,7 +62,8 @@ def audit_coverage(
                 "_node_ref": image_node_ref(source_page, idx),
             })
 
-    # Run alignment
+    # Run alignment. When draft is absent, treat content.json as the baseline
+    # and suppress draft-only "missing from markdown" findings.
     alignment = align_blocks(content_data, draft_markdown)
 
     # Build coverage stats
@@ -98,54 +99,57 @@ def audit_coverage(
     # Build issues
     issues: list[AuditIssue] = []
 
-    # Missing blocks
-    for dedupe_key in alignment.unmatched_block_keys:
-        block_info = _find_block_by_key(expected_blocks, dedupe_key)
-        source_page = block_info.get("_source_page") if block_info else None
-        reading_order = block_info.get("reading_order") if block_info else None
-        block_text = (block_info.get("text", "") or "")[:80] if block_info else ""
-        issues.append(AuditIssue(
-            issue_type="missing_block",
-            severity="warning",
-            source_page=source_page,
-            reading_order=reading_order,
-            node_ref=dedupe_key,
-            message=f"Block not found in draft Markdown: {block_text!r}",
-            auto_fixable=True,
-        ))
-
-    # Missing tables
-    for table in expected_tables:
-        node_ref = table["_node_ref"]
-        if node_ref not in alignment.matched_tables:
-            source_page = table["_source_page"]
-            headers = table.get("headers", [])
-            has_fallback = bool(table.get("fallback_html") or table.get("fallback_image"))
+    if draft_markdown:
+        # Missing blocks
+        for dedupe_key in alignment.unmatched_block_keys:
+            block_info = _find_block_by_key(expected_blocks, dedupe_key)
+            source_page = block_info.get("_source_page") if block_info else None
+            reading_order = block_info.get("reading_order") if block_info else None
+            block_text = (block_info.get("text", "") or "")[:80] if block_info else ""
             issues.append(AuditIssue(
-                issue_type="table_render_failed",
-                severity="warning" if has_fallback else "error",
-                source_page=source_page,
-                reading_order=None,
-                node_ref=node_ref,
-                message=f"Table not found in draft Markdown. Headers: {headers[:4]}",
-                auto_fixable=has_fallback,
-            ))
-
-    # Missing images
-    for image in expected_images:
-        node_ref = image["_node_ref"]
-        if node_ref not in alignment.matched_images:
-            source_page = image["_source_page"]
-            asset_path = image.get("asset_path", "")
-            issues.append(AuditIssue(
-                issue_type="image_reference_missing",
+                issue_type="missing_block",
                 severity="warning",
                 source_page=source_page,
-                reading_order=None,
-                node_ref=node_ref,
-                message=f"Image reference not found in draft Markdown: {asset_path}",
+                reading_order=reading_order,
+                node_ref=dedupe_key,
+                message=f"Block not found in draft Markdown: {block_text!r}",
                 auto_fixable=True,
             ))
+
+    if draft_markdown:
+        # Missing tables
+        for table in expected_tables:
+            node_ref = table["_node_ref"]
+            if node_ref not in alignment.matched_tables:
+                source_page = table["_source_page"]
+                headers = table.get("headers", [])
+                has_fallback = bool(table.get("fallback_html") or table.get("fallback_image"))
+                issues.append(AuditIssue(
+                    issue_type="table_render_failed",
+                    severity="warning" if has_fallback else "error",
+                    source_page=source_page,
+                    reading_order=None,
+                    node_ref=node_ref,
+                    message=f"Table not found in draft Markdown. Headers: {headers[:4]}",
+                    auto_fixable=has_fallback,
+                ))
+
+    if draft_markdown:
+        # Missing images
+        for image in expected_images:
+            node_ref = image["_node_ref"]
+            if node_ref not in alignment.matched_images:
+                source_page = image["_source_page"]
+                asset_path = image.get("asset_path", "")
+                issues.append(AuditIssue(
+                    issue_type="image_reference_missing",
+                    severity="warning",
+                    source_page=source_page,
+                    reading_order=None,
+                    node_ref=node_ref,
+                    message=f"Image reference not found in draft Markdown: {asset_path}",
+                    auto_fixable=True,
+                ))
 
     # Overlap page issues
     if overlap_pages_expected > overlap_pages_matched:

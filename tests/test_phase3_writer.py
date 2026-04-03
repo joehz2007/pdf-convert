@@ -112,6 +112,22 @@ class TestSliceOutputDir:
 
 
 class TestWriteSliceResult:
+    def test_writes_default_md_name_when_draft_absent(self, tmp_path):
+        task = _make_task(tmp_path)
+        task.draft_md_file = None
+        task.slice_file = "chapter-1.pdf"
+        report = _make_report()
+        output_root = tmp_path / "output"
+        output_root.mkdir()
+
+        result = write_slice_result(
+            output_root, task, "# Final\n\nContent.\n", report,
+            copy_assets=True, stage_timings={"total_ms": 10},
+        )
+
+        assert result.final_md_file.endswith("chapter-1.md")
+        assert (output_root / "001-Test Chapter" / "chapter-1.md").exists()
+
     def test_writes_md_and_report(self, tmp_path):
         task = _make_task(tmp_path)
         report = _make_report()

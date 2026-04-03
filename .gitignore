@@ -36,7 +36,7 @@ Desktop.ini
 
 # PDF split/extract output (runtime artifacts)
 *_split/
-tmp_*/
+tmp*/
 
 # Test sample PDFs (large binary files)
 docs/test_samples/

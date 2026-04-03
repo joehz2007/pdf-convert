@@ -71,6 +71,9 @@ _CODE_STMT_RE = re.compile(
     r"(?:"
     r"[;{}]\s*$"                       # ends with ; or { or }
     r"|^\s*[{}]\s*$"                   # line is just a brace
+    r"|^\s*\.\w+\("                    # fluent call continuation: .hashString(
+    r"|^\s*\.\w+\b"                    # fluent property/method tail: .asBytes
+    r"|^\s*\"[^\"]*\"[),;]*\s*$"       # string literal continuation: "HmacSHA256"))
     r"|\w+\.\w+\("                     # method call: obj.method(
     r"|\w+\([^)]*[,)]"                # function call with args
     r"|^\s*(?:public|private|protected|static|final|void|class|interface|def|function|const|let|var|import|from|return|try|catch|throw|new|if|else|for|while|switch|case)\b"
@@ -107,7 +110,7 @@ def _is_fullpage_image(image: dict, n_text_blocks: int) -> bool:
 def repair(
     task: FormatTask,
     content_data: dict[str, Any],
-    draft_markdown: str,
+    draft_markdown: str | None,
     audit_result: AuditResult,
     alignment: AlignmentResult,
 ) -> tuple[NormalizedDocument, list[AutoFix]]:
@@ -118,7 +121,7 @@ def repair(
     auto_fixes: list[AutoFix] = []
 
     # Build heading level map from draft markdown for cross-reference
-    draft_heading_levels = _build_heading_level_map(draft_markdown)
+    draft_heading_levels = _build_heading_level_map(draft_markdown or "")
 
     # Build page-level structure from content.json
     pages: list[NormalizedPage] = []
@@ -223,16 +226,19 @@ def repair(
         phase3_manual_review_required=phase3_manual_review,
         metadata={
             "content_file": str(task.content_file),
-            "draft_md_file": str(task.draft_md_file),
+            "draft_md_file": str(task.draft_md_file) if task.draft_md_file else None,
         },
     )
+
+    _trim_leading_spillover(doc, auto_fixes)
 
     # Pre-repair: merge consecutive code-like paragraphs FIRST (handles brace
     # lines like "}" that draft recovery would skip), then draft recovery
     # wraps remaining isolated code lines that match fenced blocks in the draft.
     # Finally, stitch adjacent code blocks that span page boundaries.
     _merge_code_line_paragraphs(doc, auto_fixes)
-    _recover_code_blocks_from_draft(doc, draft_markdown, auto_fixes)
+    if draft_markdown:
+        _recover_code_blocks_from_draft(doc, draft_markdown, auto_fixes)
     _stitch_adjacent_code_blocks(doc, auto_fixes)
 
     # Phase A: Completeness fixes
@@ -277,8 +283,22 @@ def _table_to_markdown(
     source_page: int,
 ) -> str:
     """Convert a table node to Markdown, with fallback chain."""
-    # Try structured markdown first — but validate and repair it
     md = table.get("markdown", "")
+    fallback_html = table.get("fallback_html", "")
+    table_role = table.get("table_role", "standalone")
+
+    if fallback_html and fallback_html.strip() and (
+        table_role in {"parent", "child"} or "complex-table-block" in fallback_html
+    ):
+        auto_fixes.append(AutoFix(
+            fix_type="table_fallback_html_applied",
+            source_page=source_page,
+            node_ref=node_ref,
+            message="Complex table rendered as HTML fallback.",
+        ))
+        return fallback_html.strip()
+
+    # Try structured markdown first — but validate and repair it
     if md and md.strip() and not _is_corrupted_table_markdown(md):
         return _repair_table_markdown(md).strip()
 
@@ -310,7 +330,6 @@ def _table_to_markdown(
             return rebuilt
 
     # Fallback to HTML
-    fallback_html = table.get("fallback_html", "")
     if fallback_html and fallback_html.strip():
         auto_fixes.append(AutoFix(
             fix_type="table_fallback_html_applied",
@@ -399,6 +418,59 @@ def _image_reading_order(image: dict, page_data: dict) -> int:
     max_ro = max((b.get("reading_order", 0) for b in blocks), default=0) if blocks else 0
     tables = page_data.get("tables", [])
     return max_ro + len(tables) + 1
+
+
+def _trim_leading_spillover(doc: NormalizedDocument, auto_fixes: list[AutoFix]) -> None:
+    """Drop leading spillover blocks before the first strong heading on page one."""
+    if not doc.pages:
+        return
+
+    first_page = next((page for page in doc.pages if not page.is_overlap), doc.pages[0])
+    first_heading_index = next((i for i, block in enumerate(first_page.blocks) if block.block_type == "heading" and block.markdown), None)
+    if first_heading_index is None or first_heading_index <= 0:
+        return
+
+    leading_blocks = [block for block in first_page.blocks[:first_heading_index] if block.markdown]
+    if len(leading_blocks) < 3:
+        return
+
+    heading_text = re.sub(r"^#{1,6}\s+", "", first_page.blocks[first_heading_index].markdown).strip()
+    if not _HEADING_NUM_RE.match(heading_text) and not _HEADING_ALPHA_NUM_RE.match(heading_text):
+        return
+
+    suspicious_blocks = [block for block in leading_blocks if _looks_like_leading_spillover_block(block)]
+    if len(suspicious_blocks) < max(2, (len(leading_blocks) + 1) // 2):
+        return
+
+    removed_count = 0
+    for block in leading_blocks:
+        if block.markdown:
+            removed_count += 1
+    if removed_count == 0:
+        return
+
+    first_page.blocks = first_page.blocks[first_heading_index:]
+    auto_fixes.append(AutoFix(
+        fix_type="leading_spillover_trimmed",
+        source_page=first_page.source_page,
+        node_ref=None,
+        message=f"Trimmed {removed_count} leading spillover block(s) before first section heading",
+    ))
+
+
+def _looks_like_leading_spillover_block(block: NormalizedBlock) -> bool:
+    stripped = block.markdown.strip()
+    if not stripped:
+        return False
+    if block.block_type == "code" or _is_code_like(stripped):
+        return True
+    if re.fullmatch(r"[\[\]{}(),.:\"']+", stripped):
+        return True
+    if any(marker in stripped for marker in ('{"', '":', '},', ']}', '{"', '["')):
+        return True
+    punctuation_count = sum(1 for ch in stripped if not ch.isalnum() and not ch.isspace())
+    punctuation_ratio = punctuation_count / max(len(stripped), 1)
+    return punctuation_ratio >= 0.2 and len(stripped.split()) <= 8
 
 
 def _fix_missing_top_heading(doc: NormalizedDocument, auto_fixes: list[AutoFix]) -> None:
@@ -746,11 +818,15 @@ def _recover_code_blocks_from_draft(
     auto_fixes: list[AutoFix],
 ) -> None:
     """Reclassify paragraph blocks as code when they match draft markdown fences."""
-    code_texts = _extract_draft_code_texts(draft_markdown)
-    if not code_texts:
+    code_blocks = _extract_draft_code_blocks(draft_markdown)
+    if not code_blocks:
         return
 
-    normalized_codes = [normalize_text(ct) for ct in code_texts if ct.strip()]
+    normalized_codes = [
+        (language, code_text, normalize_text(code_text))
+        for language, code_text in code_blocks
+        if code_text.strip()
+    ]
     if not normalized_codes:
         return
 
@@ -761,12 +837,15 @@ def _recover_code_blocks_from_draft(
             block_norm = normalize_text(block.markdown)
             if len(block_norm) < 8:
                 continue
-            for code_norm in normalized_codes:
+            for language, code_text, code_norm in normalized_codes:
                 if not code_norm:
                     continue
                 if block_norm in code_norm:
                     block.block_type = "code"
-                    block.markdown = f"```\n{block.markdown}\n```"
+                    block.markdown = _build_fenced_code_block(
+                        [block.markdown],
+                        language_hint=language,
+                    )
                     block.repaired = True
                     block.repair_actions.append("code_block_rebuilt")
                     auto_fixes.append(AutoFix(
@@ -778,26 +857,29 @@ def _recover_code_blocks_from_draft(
                     break
 
 
-def _extract_draft_code_texts(draft_markdown: str) -> list[str]:
-    """Extract text content from fenced code blocks in draft markdown."""
-    results: list[str] = []
+def _extract_draft_code_blocks(draft_markdown: str) -> list[tuple[str | None, str]]:
+    """Extract ``(language, code_text)`` pairs from fenced code blocks."""
+    results: list[tuple[str | None, str]] = []
     lines = draft_markdown.splitlines()
     in_fence = False
     fence_lines: list[str] = []
+    fence_language: str | None = None
     for line in lines:
         stripped = line.strip()
         if stripped.startswith("```"):
             if in_fence:
-                results.append("\n".join(fence_lines))
+                results.append((fence_language, "\n".join(fence_lines)))
                 fence_lines = []
                 in_fence = False
+                fence_language = None
             else:
                 in_fence = True
                 fence_lines = []
+                fence_language = stripped[3:].strip() or None
         elif in_fence:
             fence_lines.append(line)
     if in_fence and fence_lines:
-        results.append("\n".join(fence_lines))
+        results.append((fence_language, "\n".join(fence_lines)))
     return results
 
 
@@ -855,8 +937,9 @@ def _merge_code_line_paragraphs(
             count = j - i
             if count >= 3:
                 code_lines = [page.blocks[k].markdown for k in range(i, j)]
+                language_hint = _detect_context_language_hint(page.blocks, i)
                 block.block_type = "code"
-                block.markdown = "```\n" + "\n".join(code_lines) + "\n```"
+                block.markdown = _build_fenced_code_block(code_lines, language_hint=language_hint)
                 block.repaired = True
                 block.repair_actions.append("code_block_rebuilt")
                 for k in range(i + 1, j):
@@ -881,6 +964,106 @@ def _is_code_like(text: str) -> bool:
     if not re.search(r"[a-zA-Z]", stripped):
         return False
     return bool(_CODE_STMT_RE.search(stripped))
+
+
+def _detect_context_language_hint(blocks: list[NormalizedBlock], start_index: int) -> str | None:
+    """Infer code fence language from a short label immediately above code."""
+    for idx in range(start_index - 1, -1, -1):
+        block = blocks[idx]
+        if not block.markdown:
+            continue
+        text = normalize_text(_strip_fences(block.markdown)).lower()
+        if not text:
+            continue
+        if text in {"typescript", "typescript example", "ts"}:
+            return "typescript"
+        if text in {"javascript", "javascript example", "js"}:
+            return "javascript"
+        if text in {"java", "java example"}:
+            return "java"
+        if text in {"python", "python example"}:
+            return "python"
+        break
+    return None
+
+
+def _build_fenced_code_block(code_lines: list[str], language_hint: str | None = None) -> str:
+    """Normalize and format code lines, then wrap them in a fenced block."""
+    normalized_lines = _normalize_code_lines(code_lines)
+    formatted_lines = _indent_code_lines(normalized_lines)
+    language = _infer_code_language(formatted_lines, language_hint=language_hint)
+    fence = f"```{language}" if language else "```"
+    return fence + "\n" + "\n".join(formatted_lines) + "\n```"
+
+
+def _normalize_code_lines(code_lines: list[str]) -> list[str]:
+    """Join PDF-split code continuations into logical source lines."""
+    normalized: list[str] = []
+    for raw_line in code_lines:
+        stripped = raw_line.strip()
+        if not stripped:
+            continue
+        if normalized and _should_join_code_line(normalized[-1], stripped):
+            normalized[-1] = normalized[-1].rstrip() + _code_join_separator(normalized[-1], stripped) + stripped
+        else:
+            normalized.append(stripped)
+    return normalized
+
+
+def _should_join_code_line(previous: str, current: str) -> bool:
+    """Heuristic for PDF-wrapped code continuations."""
+    prev = previous.rstrip()
+    curr = current.lstrip()
+    if curr.startswith(".") or curr.startswith((")", "]", ",", '"', "'")):
+        return True
+    if prev.endswith((",", "(", ".", "=", "+")):
+        return True
+    return bool(re.search(r"(?:\bnew|\breturn)\s*$", prev))
+
+
+def _code_join_separator(previous: str, current: str) -> str:
+    """Choose separator when joining wrapped code fragments."""
+    prev = previous.rstrip()
+    curr = current.lstrip()
+    if curr.startswith(".") or prev.endswith("."):
+        return ""
+    if curr.startswith((")", "]", ",")):
+        return ""
+    if prev.endswith(("(", ",", "=", "+")) or re.search(r"(?:\bnew|\breturn)\s*$", prev):
+        return " "
+    return " "
+
+
+def _indent_code_lines(code_lines: list[str]) -> list[str]:
+    """Apply simple brace-based indentation to normalized code lines."""
+    indented: list[str] = []
+    depth = 0
+    for line in code_lines:
+        stripped = line.strip()
+        if re.match(r"^[}\])]", stripped):
+            depth = max(depth - 1, 0)
+        indented.append(("  " * depth) + stripped)
+        delta = _bracket_delta(stripped)
+        if delta > 0:
+            depth += delta
+        elif delta < 0 and not re.match(r"^[}\])]", stripped):
+            depth = max(depth + delta, 0)
+    return indented
+
+
+def _infer_code_language(code_lines: list[str], language_hint: str | None = None) -> str | None:
+    """Infer a code fence language from context or syntax."""
+    if language_hint:
+        return language_hint
+    joined = "\n".join(code_lines)
+    lowered = joined.lower()
+    if any(token in joined for token in ("byte[]", "String ", "StandardCharsets.", "SecretKeySpec", "Hashing.hmacSha256")):
+        return "java"
+    if any(token in lowered for token in ("const ", "let ", "async ", "interface ", "await ", "=>")) or ": string" in lowered:
+        return "typescript"
+    if joined.lstrip().startswith(("{", "[")):
+        return "json"
+    return None
 
 
 def _is_brace_line(text: str) -> bool:

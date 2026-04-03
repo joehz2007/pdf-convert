@@ -1082,3 +1082,36 @@ class TestPhase2JoinWithoutSpace:
         from pdf_extract.metadata_builder import should_join_without_space
         # Multiple words on previous line → PascalCase check requires single word
         assert should_join_without_space("the field is", "Required") is False
+
+
+class TestCodeFormattingRegression:
+    """Regression tests for code-block formatting from PDF line fragments."""
+
+    def test_chain_continuations_form_typed_and_indented_code_block(self):
+        from md_format.repair_engine import _merge_code_line_paragraphs
+        from md_format.contracts import NormalizedBlock, NormalizedPage, NormalizedDocument, AutoFix
+
+        blocks = [
+            NormalizedBlock("paragraph", 1, 1, "p0", "TypeScript", False),
+            NormalizedBlock("paragraph", 1, 2, "p1", "private static byte[] deriveSubKey(byte[] masterKey, String timestamp) {", False),
+            NormalizedBlock("paragraph", 1, 3, "p2", "return Hashing.hmacSha256(new SecretKeySpec(masterKey,", False),
+            NormalizedBlock("paragraph", 1, 4, "p3", '"HmacSHA256"))', False),
+            NormalizedBlock("paragraph", 1, 5, "p4", ".hashString(timestamp, StandardCharsets.UTF_8)", False),
+            NormalizedBlock("paragraph", 1, 6, "p5", ".asBytes();", False),
+            NormalizedBlock("paragraph", 1, 7, "p6", "}", False),
+        ]
+        doc = NormalizedDocument(
+            slice_file="test.pdf", display_title="", order_index=1,
+            start_page=1, end_page=1,
+            pages=[NormalizedPage(1, 1, False, blocks=blocks)],
+        )
+        fixes: list[AutoFix] = []
+        _merge_code_line_paragraphs(doc, fixes)
+
+        code_blocks = [b for b in doc.pages[0].blocks if b.block_type == "code" and b.markdown]
+        assert len(code_blocks) == 1
+        code = code_blocks[0].markdown
+        assert code.startswith("```typescript\n")
+        assert 'return Hashing.hmacSha256(new SecretKeySpec(masterKey, "HmacSHA256")).hashString(timestamp, StandardCharsets.UTF_8).asBytes();' in code
+        assert "\n  return Hashing.hmacSha256" in code
+        assert code.rstrip().endswith("}\n```")

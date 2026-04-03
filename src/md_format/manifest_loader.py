@@ -11,7 +11,7 @@ from .errors import (
 )
 
 REQUIRED_GLOBAL_FIELDS = {"source_file", "total_slices", "slices"}
-REQUIRED_SLICE_FIELDS = {"slice_file", "content_file", "md_file", "status"}
+REQUIRED_SLICE_FIELDS = {"slice_file", "content_file", "status"}
 
 
 def load_extract_manifest(
@@ -54,14 +54,20 @@ def load_extract_manifest(
             continue
 
         content_rel = str(slice_data["content_file"])
-        md_rel = str(slice_data["md_file"])
         content_path = input_path / content_rel
-        md_path = input_path / md_rel
 
         if not content_path.exists():
             raise MissingContentFileError(f"content.json not found: {content_path}")
-        if not md_path.exists():
-            raise MissingDraftMarkdownError(f"Draft Markdown not found: {md_path}")
+
+        md_path: Path | None = None
+        md_rel = slice_data.get("md_file")
+        emit_draft_md = bool(slice_data.get("emit_draft_md", False))
+        if md_rel:
+            candidate = input_path / str(md_rel)
+            if candidate.exists():
+                md_path = candidate
+            elif emit_draft_md:
+                raise MissingDraftMarkdownError(f"Draft Markdown not found: {candidate}")
 
         slice_dir = content_path.parent
         assets_dir = slice_dir / "assets"

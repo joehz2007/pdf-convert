@@ -92,11 +92,19 @@ def _resolve_pair(
         # Only process overlap-marked blocks or blocks within overlap window
         matched = False
 
-        for lb in left_tail:
+        for lb in _left_match_candidates(left_prov, left_tail, rb, pair.left.end_page):
             strategy = _match_blocks(lb, rb)
+            if strategy == "none" and _is_repeated_boundary_block(lb, rb, pair):
+                strategy = "source_page_text_hash"
             if strategy != "none":
                 # Protect: don't remove heading that starts a new chapter
                 if _is_chapter_heading(rb, pair.right):
+                    if _is_repeated_overlap_heading(lb, rb) or _is_repeated_boundary_block(lb, rb, pair):
+                        matched = True
+                        match_strategy = strategy
+                        match_page = rb.source_page
+                        matched_right_indices.append(ri)
+                        break
                     LOGGER.debug(
                         "Skipping chapter heading dedup: %s",
                         rb.markdown[:60],
@@ -204,6 +212,40 @@ def _is_chapter_heading(block: MergeBlockRef, task: MergeTask) -> bool:
     return False
 
 
+def _is_repeated_overlap_heading(left: MergeBlockRef, right: MergeBlockRef) -> bool:
+    if left.block_type != "heading" or right.block_type != "heading":
+        return False
+    if left.source_page != right.source_page:
+        return False
+    if left.dedupe_key and right.dedupe_key and left.dedupe_key == right.dedupe_key:
+        return True
+    return bool(
+        left.normalized_text_hash
+        and right.normalized_text_hash
+        and left.normalized_text_hash == right.normalized_text_hash
+    )
+
+
+def _is_repeated_boundary_block(left: MergeBlockRef, right: MergeBlockRef, pair: AdjacentPair) -> bool:
+    if pair.left.end_page != pair.right.start_page:
+        return False
+    if left.block_type != right.block_type:
+        return False
+    if bool(
+        left.normalized_text_hash
+        and right.normalized_text_hash
+        and left.normalized_text_hash == right.normalized_text_hash
+    ):
+        return True
+    if left.block_type == "heading":
+        return _heading_title(left) == _heading_title(right)
+    return False
+
+
+def _heading_title(block: MergeBlockRef) -> str:
+    return block.markdown.lstrip("#").strip()
+
+
 def _remove_blocks_from_content(
     slice_file: str,
     prov: SliceProvenance,
@@ -238,3 +280,33 @@ def _remove_blocks_from_content(
             content = before + after
 
     slice_contents[slice_file] = content
+
+
+def _left_match_candidates(
+    left_prov: SliceProvenance,
+    left_tail: list[MergeBlockRef],
+    right_block: MergeBlockRef,
+    left_end_page: int,
+) -> list[MergeBlockRef]:
+    candidates = list(left_tail)
+    if not right_block.is_overlap or right_block.source_page > left_end_page:
+        return candidates
+
+    seen = {
+        (block.source_page, block.block_type, block.dedupe_key, block.normalized_text_hash, block.asset_ref, block.markdown)
+        for block in candidates
+    }
+    for block in left_prov.all_blocks:
+        key = (
+            block.source_page,
+            block.block_type,
+            block.dedupe_key,
+            block.normalized_text_hash,
+            block.asset_ref,
+            block.markdown,
+        )
+        if key in seen or block.source_page != right_block.source_page:
+            continue
+        candidates.append(block)
+        seen.add(key)
+    return candidates

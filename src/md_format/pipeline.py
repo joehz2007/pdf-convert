@@ -218,7 +218,9 @@ def _process_slice(task: FormatTask) -> SliceProcessOutcome:
         # --- Stage: coverage audit ---
         audit_start = perf_counter()
         content_data = json.loads(task.content_file.read_text(encoding="utf-8"))
-        draft_markdown = task.draft_md_file.read_text(encoding="utf-8")
+        draft_markdown = None
+        if task.draft_md_file is not None:
+            draft_markdown = task.draft_md_file.read_text(encoding="utf-8")
         audit_result = audit_coverage(content_data, draft_markdown)
         alignment = align_blocks(content_data, draft_markdown)
         stage_timings["coverage_audit_ms"] = elapsed_ms_since(audit_start)
@@ -274,7 +276,7 @@ def _process_slice(task: FormatTask) -> SliceProcessOutcome:
         # Build review report
         report = ReviewReport(
             slice_file=task.slice_file,
-            final_md_file=task.draft_md_file.name,
+            final_md_file=_final_markdown_filename(task),
             created_at=datetime.now(timezone.utc).isoformat(),
             status="success",
             manual_review_required=manual_review,
@@ -326,3 +328,9 @@ def finalize_stage_timings(stage_timings: dict[str, int]) -> None:
 def elapsed_ms_since(start: float) -> int:
     elapsed = (perf_counter() - start) * 1000
     return max(1, int(elapsed))
+
+
+def _final_markdown_filename(task: FormatTask) -> str:
+    if task.draft_md_file is not None:
+        return task.draft_md_file.name
+    return Path(task.slice_file).with_suffix(".md").name

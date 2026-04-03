@@ -8,7 +8,7 @@ from typing import Any
 import pymupdf
 import pymupdf4llm
 
-from .config import DEFAULT_TABLE_STRATEGY
+from .config import DEFAULT_TABLE_STRATEGY, FALLBACK_TABLE_STRATEGIES
 from .errors import EmptyExtractionError
 
 LOGGER = logging.getLogger("pdf_extract.markdown_extractor")
@@ -17,7 +17,7 @@ TABLE_SEPARATOR_RE = re.compile(r"\|\s*---")
 TABLE_LINE_RE = re.compile(r"^\|.*\|\s*$")
 BROKEN_WORD_BREAK_RE = re.compile(r"[A-Za-z]{2,}<br>[A-Za-z]{1,}")
 NESTED_TABLE_SIGNAL_RE = re.compile(r"Objects of|Supported Types:|Limits?:|description\s*\(", re.IGNORECASE)
-TABLE_FALLBACK_PLACEHOLDER = "[复杂表格 Markdown 已回退，请以 content.json / fallback_html 为准]"
+TABLE_FALLBACK_PLACEHOLDER = "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]"
 
 # Cross-page table detection thresholds
 CROSS_PAGE_BOTTOM_RATIO = 0.88
@@ -25,6 +25,8 @@ CROSS_PAGE_TOP_RATIO = 0.12
 CROSS_PAGE_WIDTH_TOLERANCE = 0.15
 SPURIOUS_TABLE_MIN_AREA = 3000
 SPURIOUS_TABLE_MAX_HEADER_COLS = 12
+HTTP_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE"}
+PATH_LIKE_CELL_RE = re.compile(r"^/[A-Za-z0-9._~!$&'()*+,;=:@%/-]+$")
 
 
 def extract_markdown_chunks(
@@ -40,16 +42,26 @@ def extract_markdown_chunks(
         annotate_table_snapshots(document, chunks, page_numbers)
         postprocess_cross_page_tables(document, chunks, page_numbers)
         index_by_doc_page = {doc_page_index: offset for offset, doc_page_index in enumerate(page_numbers)}
-        fallback_pages = detect_table_retry_pages(chunks, page_numbers)
-        for doc_page_index in fallback_pages:
-            retry_chunks = _to_markdown(document, table_strategy="lines", pages=[doc_page_index])
-            annotate_table_snapshots(document, retry_chunks, [doc_page_index])
-            if retry_chunks:
-                retry_chunk = retry_chunks[0]
-                retry_chunk["table_strategy_used"] = "lines"
-                retry_chunk["table_fallback_used"] = True
-                retry_chunk["table_retry_pages"] = [doc_page_index + 1]
-                chunks[index_by_doc_page[doc_page_index]] = retry_chunk
+        remaining_retry_pages = detect_table_retry_pages(chunks, page_numbers)
+        for fallback_strategy in FALLBACK_TABLE_STRATEGIES:
+            if not remaining_retry_pages:
+                break
+            still_pending: list[int] = []
+            for doc_page_index in remaining_retry_pages:
+                retry_chunks = _to_markdown(document, table_strategy=fallback_strategy, pages=[doc_page_index])
+                annotate_table_snapshots(document, retry_chunks, [doc_page_index])
+                if retry_chunks:
+                    retry_chunk = retry_chunks[0]
+                    if chunk_has_markdown_table(retry_chunk) or retry_chunk.get("table_snapshots"):
+                        retry_chunk["table_strategy_used"] = fallback_strategy
+                        retry_chunk["table_fallback_used"] = True
+                        retry_chunk["table_retry_pages"] = [doc_page_index + 1]
+                        chunks[index_by_doc_page[doc_page_index]] = retry_chunk
+                    else:
+                        still_pending.append(doc_page_index)
+                else:
+                    still_pending.append(doc_page_index)
+            remaining_retry_pages = still_pending
         for chunk in chunks:
             chunk.setdefault("table_strategy_used", table_strategy)
             chunk.setdefault("table_fallback_used", False)
@@ -248,16 +260,34 @@ def _is_spurious_table(snapshot: dict[str, Any], page_width: float, page_height:
             return True
 
     headers = snapshot.get("headers", [])
+    rows = snapshot.get("rows", [])
     if len(headers) > SPURIOUS_TABLE_MAX_HEADER_COLS:
         return True
 
     if headers and all(len(str(h or "").strip()) <= 1 for h in headers):
-        rows = snapshot.get("rows", [])
         has_real_data = any(
             any(len(str(c or "").strip()) > 2 for c in row) for row in rows
         )
         if not has_real_data:
             return True
+
+    normalized_headers = [str(header or "").strip() for header in headers if str(header or "").strip()]
+    if not rows and normalized_headers and len(normalized_headers) >= 5:
+        if all(len(header) <= 4 and any(ch.isalpha() for ch in header) for header in normalized_headers):
+            return True
+
+    if not headers and len(rows) == 1:
+        first_row = [str(cell or "").strip() for cell in rows[0]]
+        non_empty = [cell for cell in first_row if cell]
+        if len(non_empty) in {2, 3}:
+            method_count = sum(1 for cell in non_empty if cell.upper() in HTTP_METHODS)
+            path_count = sum(1 for cell in non_empty if PATH_LIKE_CELL_RE.match(cell))
+            short_labels_only = all(
+                cell.upper() in HTTP_METHODS or PATH_LIKE_CELL_RE.match(cell) or len(cell) <= 12
+                for cell in non_empty
+            )
+            if method_count == 1 and path_count == 1 and short_labels_only:
+                return True
 
     return False
 
@@ -385,6 +415,8 @@ def _merge_table_chain(
 
         merged_rows.extend(data_rows)
 
+        consumed = chunks[cont_offset].setdefault("_consumed_table_bboxes", [])
+        consumed.append(cont_snapshot.get("bbox", [0, 0, 0, 0]))
         cont_snapshots.pop(cont_idx)
         chunks[cont_offset].setdefault("metadata", {})["table_count_hint"] = len(cont_snapshots)
 

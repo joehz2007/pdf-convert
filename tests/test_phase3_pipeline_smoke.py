@@ -144,3 +144,18 @@ def test_pipeline_copy_assets_false(create_phase2_output, tmp_path):
     # Assets should NOT be copied
     out_assets = list((output_dir).rglob("assets/p0001_img01.png"))
     assert len(out_assets) == 0
+
+
+def test_pipeline_succeeds_without_draft_markdown(create_phase2_output, tmp_path):
+    extract_dir = create_phase2_output(
+        "no-draft",
+        [{"slice_file": "ch1.pdf", "display_title": "Ch1", "emit_draft_md": False}],
+    )
+    output_dir = tmp_path / "no_draft_format"
+
+    manifest = run_pipeline(input_dir=extract_dir, output_dir=output_dir)
+
+    assert manifest.success_count == 1
+    slice_dir = output_dir / "001-Ch1"
+    assert (slice_dir / "ch1.md").exists()
+    assert (slice_dir / "review_report.json").exists()

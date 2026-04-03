@@ -57,3 +57,15 @@ def test_manifest_loader_rejects_missing_content_json(create_phase2_output):
 
     with pytest.raises(MissingContentFileError):
         load_extract_manifest(extract_dir)
+
+
+def test_manifest_loader_allows_missing_draft_when_not_emitted(create_phase2_output):
+    extract_dir = create_phase2_output(
+        "test-no-draft",
+        [{"slice_file": "ch1.pdf", "display_title": "Chapter 1", "emit_draft_md": False}],
+    )
+
+    raw, tasks = load_extract_manifest(extract_dir)
+
+    assert len(tasks) == 1
+    assert tasks[0].draft_md_file is None

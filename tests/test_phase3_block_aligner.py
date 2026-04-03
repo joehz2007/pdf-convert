@@ -128,6 +128,19 @@ def _make_content_data(blocks=None, tables=None, images=None, source_page=1):
 
 
 class TestAlignBlocks:
+    def test_no_draft_marks_content_as_covered(self):
+        content = _make_content_data(
+            blocks=[{"dedupe_key": "blk1", "text": "Hello world"}],
+            tables=[{"table_id": "t1", "headers": ["A", "B"]}],
+            images=[{"asset_path": "assets/p0001_img01.png"}],
+        )
+        result = align_blocks(content, None)
+
+        assert "blk1" in result.matched_blocks
+        assert "table:1:0" in result.matched_tables
+        assert "image:1:0" in result.matched_images
+        assert result.unmatched_block_keys == []
+
     def test_exact_text_match(self):
         content = _make_content_data(blocks=[
             {"dedupe_key": "blk1", "text": "Hello world"},

@@ -78,7 +78,7 @@ def test_writer_persists_stage_timings_and_manifest_timings(create_pdf, tmp_path
     assert (tmp_path / "extract_manifest.json").exists()
 
 
-def test_writer_renders_fallback_html_in_markdown(create_pdf, tmp_path):
+def test_writer_prefers_rendered_markdown_in_draft_output(create_pdf, tmp_path):
     pdf_path = create_pdf("writer-fallback.pdf", pages=[{"body": "fallback body"}])
     task = SliceTask(
         slice_number=1,
@@ -104,6 +104,7 @@ def test_writer_renders_fallback_html_in_markdown(create_pdf, tmp_path):
                 headers=["A"],
                 rows=[["x"]],
                 markdown=None,
+                rendered_markdown="Table metadata: `data-table-id=p0001-t01`\n\n| A |\n| --- |\n| x |",
                 fallback_html="<div data-table-role=\"standalone\"><table><tr><td>x</td></tr></table></div>",
                 fallback_image="assets/p0001_table01.png",
             )
@@ -125,11 +126,12 @@ def test_writer_renders_fallback_html_in_markdown(create_pdf, tmp_path):
     md_text = (tmp_path / slice_record.md_file).read_text(encoding="utf-8")
 
     assert TABLE_FALLBACK_PLACEHOLDER not in md_text
-    assert '<div data-table-role="standalone"><table><tr><td>x</td></tr></table></div>' in md_text
+    assert "Table metadata: `data-table-id=p0001-t01`" in md_text
+    assert '<div data-table-role="standalone">' not in md_text
     assert "before" in md_text and "after" in md_text
 
 
-def test_render_page_markdown_uses_complex_table_fallback_when_page_markdown_empty():
+def test_render_page_markdown_uses_rendered_markdown_when_page_markdown_empty():
     page = PageContent(
         slice_page=1,
         source_page=1,
@@ -146,6 +148,7 @@ def test_render_page_markdown_uses_complex_table_fallback_when_page_markdown_emp
                 headers=[],
                 rows=[],
                 markdown=None,
+                rendered_markdown="Table metadata: `data-table-id=p0001-t01`\n\n| Field |\n| --- |\n| nested |",
                 fallback_html="<div data-table-role=\"standalone\"><table><tr><td>nested</td></tr></table></div>",
                 fallback_image=None,
             )
@@ -155,7 +158,7 @@ def test_render_page_markdown_uses_complex_table_fallback_when_page_markdown_emp
 
     rendered = render_page_markdown(page)
 
-    assert rendered == '<div data-table-role="standalone"><table><tr><td>nested</td></tr></table></div>'
+    assert rendered == "Table metadata: `data-table-id=p0001-t01`\n\n| Field |\n| --- |\n| nested |"
 
 
 def test_writer_renders_child_table_markup_when_markdown_is_empty():
@@ -175,6 +178,11 @@ def test_writer_renders_child_table_markup_when_markdown_is_empty():
                 headers=["Field"],
                 rows=[["requestId"]],
                 markdown=None,
+                rendered_markdown=(
+                    "**Transfers description (Objects of Transfers)**\n\n"
+                    "Table metadata: `data-table-id=p0001-t01-c01` `data-table-role=child` `data-parent-table-id=p0001-t01`\n\n"
+                    "| Field |\n| --- |\n| requestId |"
+                ),
                 fallback_html=(
                     '<div class="complex-table-block" data-table-id="p0001-t01-c01" '
                     'data-table-role="child" data-parent-table-id="p0001-t01">\n'
@@ -194,9 +202,9 @@ def test_writer_renders_child_table_markup_when_markdown_is_empty():
 
     rendered = render_page_markdown(page)
 
-    assert 'data-table-role="child"' in rendered
-    assert 'data-parent-table-id="p0001-t01"' in rendered
-    assert 'Transfers description (Objects of Transfers)' in rendered
+    assert "`data-table-role=child`" in rendered
+    assert "`data-parent-table-id=p0001-t01`" in rendered
+    assert "**Transfers description (Objects of Transfers)**" in rendered
 
 
 def test_writer_builds_failure_record_with_error_code(create_pdf):
@@ -224,7 +232,7 @@ def test_writer_builds_failure_record_with_error_code(create_pdf):
     assert record.stage_timings["total_ms"] == 9
 
 
-def test_render_page_markdown_replaces_complex_table_markdown_with_fallback_html():
+def test_render_page_markdown_replaces_complex_table_markdown_with_rendered_markdown():
     table_markdown = "|Step 1|Derive key|\n|---|---|\n|Step 2|Submit request|"
     page = PageContent(
         slice_page=1,
@@ -242,6 +250,7 @@ def test_render_page_markdown_replaces_complex_table_markdown_with_fallback_html
                 headers=[],
                 rows=[["Step 1", "Derive key"], ["Step 2", "Submit request"]],
                 markdown=table_markdown,
+                rendered_markdown="Table metadata: `data-table-id=p0001-t01`\n\n| Step | Description |\n| --- | --- |\n| Step 1 | Derive key |\n| Step 2 | Submit request |",
                 fallback_html="<div data-table-role=\"standalone\"><table><tbody><tr><td>Step 1</td><td>Derive key</td></tr><tr><td>Step 2</td><td>Submit request</td></tr></tbody></table></div>",
                 fallback_image=None,
                 table_id="p0001-t01",
@@ -253,5 +262,5 @@ def test_render_page_markdown_replaces_complex_table_markdown_with_fallback_html
     rendered = render_page_markdown(page)
 
     assert table_markdown not in rendered
-    assert 'data-table-role="standalone"' in rendered
-    assert rendered.index("before") < rendered.index('data-table-role="standalone"') < rendered.index("after")
+    assert "`data-table-id=p0001-t01`" in rendered
+    assert rendered.index("before") < rendered.index('`data-table-id=p0001-t01`') < rendered.index("after")

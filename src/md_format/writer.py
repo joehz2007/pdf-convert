@@ -62,7 +62,7 @@ def write_slice_result(
         final_markdown = rewrite_asset_paths(final_markdown, task.assets_dir, out_dir)
 
     # Write final .md
-    md_filename = task.draft_md_file.name
+    md_filename = task.draft_md_file.name if task.draft_md_file is not None else Path(task.slice_file).with_suffix(".md").name
     md_path = out_dir / md_filename
     md_path.write_text(final_markdown, encoding="utf-8")
 

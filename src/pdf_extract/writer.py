@@ -17,7 +17,7 @@ MAX_SAFE_PATH_LENGTH = 240
 MIN_COMPONENT_LENGTH = 20
 SLICE_TIMING_KEYS = ("precheck_ms", "markdown_extract_ms", "metadata_build_ms", "write_ms", "total_ms")
 RUN_TIMING_KEYS = ("manifest_load_ms", "slice_total_ms", "write_manifest_ms", "total_ms")
-TABLE_FALLBACK_PLACEHOLDER = "[复杂表格 Markdown 已回退，请以 content.json / fallback_html 为准]"
+TABLE_FALLBACK_PLACEHOLDER = "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]"
 
 
 def resolve_output_dir(loaded_manifest: LoadedManifest, output_dir: str | Path | None) -> Path:
@@ -154,6 +154,8 @@ def _rebuild_markdown_from_blocks(blocks: list) -> str:
 def render_complex_table_fragment(table: TableNode) -> str:
     if table.table_role == "parent" and not has_nonempty_table_rows(table):
         return ""
+    if table.rendered_markdown:
+        return table.rendered_markdown.strip()
     if table.fallback_html:
         return table.fallback_html.strip()
     if table.fallback_image:

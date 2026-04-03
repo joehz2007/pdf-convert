@@ -186,14 +186,17 @@ def create_phase2_output(tmp_path):
                 content_path = slice_dir / "content.json"
                 content_path.write_text(json.dumps(content, ensure_ascii=False, indent=2), encoding="utf-8")
 
-                md_content = spec.get("markdown", f"# {display_title}\n\nBody text.")
+                emit_draft_md = spec.get("emit_draft_md", True)
                 md_path = slice_dir / slice_file.replace(".pdf", ".md")
-                md_path.write_text(md_content, encoding="utf-8")
+                if emit_draft_md:
+                    md_content = spec.get("markdown", f"# {display_title}\n\nBody text.")
+                    md_path.write_text(md_content, encoding="utf-8")
 
                 manifest["slices"].append({
                     "slice_file": slice_file,
                     "content_file": f"{dir_name}/content.json",
-                    "md_file": f"{dir_name}/{md_path.name}",
+                    "md_file": f"{dir_name}/{md_path.name}" if emit_draft_md else None,
+                    "emit_draft_md": emit_draft_md,
                     "status": "success",
                     "warning_count": 0,
                     "manual_review_required": spec.get("manual_review_required", False),

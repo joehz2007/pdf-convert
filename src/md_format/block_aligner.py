@@ -159,12 +159,28 @@ def _extract_lines(lines: list[str], line_map: list[int]) -> str:
 
 def align_blocks(
     content_data: dict[str, Any],
-    draft_markdown: str,
+    draft_markdown: str | None,
 ) -> AlignmentResult:
     """Align draft Markdown segments against content.json blocks.
 
     Returns an ``AlignmentResult`` with matched/unmatched information.
     """
+    if not draft_markdown:
+        result = AlignmentResult(segments=[])
+        for page_data in content_data.get("source_pages", []):
+            source_page = page_data.get("source_page", 0)
+            for block in page_data.get("blocks", []):
+                dedupe_key = block.get("dedupe_key", "")
+                if dedupe_key:
+                    result.matched_blocks[dedupe_key] = normalize_text(block.get("text", ""))
+            for idx, _table in enumerate(page_data.get("tables", [])):
+                result.matched_tables.add(_table_node_ref(source_page, idx))
+            for idx, image in enumerate(page_data.get("images", [])):
+                asset_path = image.get("asset_path", "")
+                if asset_path:
+                    result.matched_images.add(_image_node_ref(source_page, idx))
+        return result
+
     segments = parse_markdown_segments(draft_markdown)
     result = AlignmentResult(segments=segments)
 

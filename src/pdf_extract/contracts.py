@@ -55,6 +55,7 @@ class TableNode:
     headers: list[str] = field(default_factory=list)
     rows: list[list[Any]] = field(default_factory=list)
     markdown: str | None = None
+    rendered_markdown: str | None = None
     fallback_html: str | None = None
     fallback_image: str | None = None
     table_id: str = ""
@@ -62,6 +63,9 @@ class TableNode:
     table_role: str = "standalone"
     section_title: str | None = None
     child_table_ids: list[str] = field(default_factory=list)
+    table_kind: str = "simple"
+    render_strategy: str = "gfm_table"
+    data_attributes: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -73,6 +77,15 @@ class ImageNode:
     width: int
     height: int
     caption: str | None = None
+
+
+@dataclass(slots=True)
+class OutlineNode:
+    section_id: str
+    title: str
+    level: int
+    source_page: int
+    parent_id: str | None = None
 
 
 @dataclass(slots=True)
@@ -93,6 +106,7 @@ class ContentResult:
     start_page: int
     end_page: int
     source_pages: list[PageContent]
+    document_outline: list[OutlineNode] = field(default_factory=list)
     assets: list[JsonDict] = field(default_factory=list)
     stats: JsonDict = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)

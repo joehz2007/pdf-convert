@@ -738,3 +738,54 @@ class TestGoldenCrossPageCodeStitching:
 
         # No cross-page stitching
         assert not any("cross_page" in f.fix_type for f in fixes)
+
+
+# ===========================================================================
+# Golden Test 8: Leading spillover trimming
+# ===========================================================================
+
+
+class TestGoldenLeadingSpilloverTrim:
+    """Regression: first page may start with trailing content from the prior section."""
+
+    def test_trim_blocks_before_first_numbered_heading(self):
+        content = _content([_page(
+            blocks=[
+                _block('{"tail": true}', reading_order=1),
+                _block('"memo": "test payout"', reading_order=2),
+                _block('}', reading_order=3),
+                _block('8.8 Payout Order API', type='heading', reading_order=20, heading_level=2),
+                _block('8.8.1 Create Payout Order', type='heading', reading_order=21, heading_level=3),
+                _block('Endpoint:', reading_order=22),
+            ],
+        )])
+        draft = """## 8.8 Payout Order API
+
+### 8.8.1 Create Payout Order
+
+Endpoint:
+"""
+        _, fixes, md = _run(content, draft, display_title='')
+
+        assert '{"tail": true}' not in md
+        assert '"memo": "test payout"' not in md
+        assert md.startswith('## 8.8 Payout Order API')
+        assert any(f.fix_type == 'leading_spillover_trimmed' for f in fixes)
+
+
+class TestGoldenComplexHtmlPreference:
+    def test_complex_table_prefers_html_fallback_over_rebuild(self):
+        table = _table(
+            headers=["Field", "Req", "Type", "Description"],
+            rows=[["requestId", "Y", "string", "External id"]],
+            markdown=None,
+            table_id="p0002-t01",
+        )
+        table["table_role"] = "parent"
+        table["fallback_html"] = '<div class="complex-table-block" data-table-id="p0002-t01" data-table-role="parent"><table><thead><tr><th>Field</th></tr></thead><tbody><tr><td>requestId</td></tr></tbody></table></div>'
+        content = _content([_page(tables=[table])])
+        _, fixes, md = _run(content, "Draft.\n", display_title='')
+
+        assert '<div class="complex-table-block"' in md
+        assert '| Field |' not in md
+        assert any(f.fix_type == 'table_fallback_html_applied' for f in fixes)

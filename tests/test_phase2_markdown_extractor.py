@@ -242,3 +242,22 @@ def test_postprocess_merges_cross_page_tables(create_pdf):
         merged = chunks[0]["table_snapshots"][-1]
         assert merged.get("cross_page") is True
         assert len(chunks[1]["table_snapshots"]) < p2_tables_before
+
+
+def test_is_spurious_table_drops_endpoint_pseudo_table():
+    snapshot = {
+        "bbox": [70, 650, 520, 710],
+        "headers": [],
+        "rows": [["POST", "", "/payfi/v1/merchant-api/confirm-payout"]],
+    }
+    assert _is_spurious_table(snapshot, 600, 842) is True
+
+
+
+def test_is_spurious_table_drops_short_country_code_artifact():
+    snapshot = {
+        "bbox": [60, 500, 520, 560],
+        "headers": ["KP,", "UA,", "US,", "SY,", "RU,", "CN", ",SG"],
+        "rows": [],
+    }
+    assert _is_spurious_table(snapshot, 600, 842) is True

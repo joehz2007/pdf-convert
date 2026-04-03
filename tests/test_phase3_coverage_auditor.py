@@ -60,6 +60,16 @@ class TestBlockCoverage:
         assert result.coverage.text_blocks_matched == 0
         assert not any(i.issue_type == "missing_block" for i in result.issues)
 
+    def test_no_draft_uses_content_as_baseline(self):
+        content = _make_content(blocks=[
+            {"dedupe_key": "b1", "text": "Present only in content"},
+        ])
+        result = audit_coverage(content, None)
+
+        assert result.coverage.text_blocks_expected == 1
+        assert result.coverage.text_blocks_matched == 1
+        assert not any(i.issue_type == "missing_block" for i in result.issues)
+
 
 # ---------------------------------------------------------------------------
 # Table coverage

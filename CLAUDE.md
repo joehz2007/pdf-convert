@@ -5,8 +5,8 @@ Multi-phase PDF-to-Markdown pipeline. Phase 1 splits PDFs, Phase 2 extracts cont
 
 ## Tech Stack
 - **Language**: Python 3.10+
-- **Core Dependencies**: PyMuPDF >= 1.23.0, markdown-it-py == 3.0.0
-- **Testing**: pytest
+- **Core Dependencies**: PyMuPDF == 1.27.1, pymupdf4llm == 0.3.4, markdown-it-py == 3.0.0, mdformat == 0.7.21, mdformat-gfm == 0.3.6
+- **Testing**: pytest == 7.4.3
 - **CLI Scripts**: `split_pdf.py` (Phase 1), `phase2_extract.py` (Phase 2), `phase3_format.py` (Phase 3), `phase4_merge.py` (Phase 4)
 
 ## Project Structure
@@ -20,24 +20,16 @@ src/
   pdf_extract/            # Phase 2 core
   md_format/              # Phase 3 core
   md_merge/               # Phase 4 core
-    __init__.py
-    config.py             # Constants & defaults
-    contracts.py          # All dataclasses/enums (MergeTask, MergeBlockRef, DedupDecision, etc.)
-    errors.py             # Domain exceptions
-    manifest_loader.py    # Load & validate format_manifest.json
-    provenance_loader.py  # Load overlap provenance from content.json or markdown fallback
-    merge_planner.py      # Generate adjacent pairs & asset plans
-    overlap_resolver.py   # Overlap dedup with heading/code protection
-    asset_relinker.py     # Copy assets & rewrite image paths
-    stitcher.py           # Stitch slices into single markdown
-    postcheck.py          # Post-merge validation (headings, duplicates, assets)
-    writer.py             # Write final .md, merge_report.json, merge_manifest.json
-    pipeline.py           # Top-level orchestrator
 tests/
-  test_phase4_*.py        # Phase 4 tests (72 tests)
+  test_cli.py
+  test_split_planner.py   # Phase 1 tests
+  test_phase2_*.py        # Phase 2 tests 
+  test_phase3_*.py        # Phase 3 tests 
+  test_phase4_*.py        # Phase 4 tests
 docs/
-  技术方案-校验与拼接(Phase4).md
-  开发计划-校验与拼接(Phase4).md
+  PRD-*.md                # Phases 1-4 Product Requirements
+  开发计划-*.md           # Phases 1-4 Development Plans
+  技术方案-*.md           # Phases 1-4 Technical Designs
 ```
 
 ## Key Design Decisions
@@ -50,6 +42,12 @@ docs/
 ```bash
 # Phase 1: Split PDF
 python split_pdf.py <input.pdf> [--output-dir <dir>] [--max-pages 20] [--log-level INFO]
+
+# Phase 2: Extract Content
+python phase2_extract.py --input-manifest <manifest.json> [--output-dir <dir>]
+
+# Phase 3: Format Markdown
+python phase3_format.py --input-dir <extract_dir> [--output-dir <dir>]
 
 # Phase 4: Merge chapter Markdown into single file
 python phase4_merge.py --input-dir <format_dir> [--output-dir <dir>] [--copy-assets] [--overwrite] [--fail-on-manual-review] [--allow-upstream-manual-review]

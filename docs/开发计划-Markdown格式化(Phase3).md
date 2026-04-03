@@ -4,7 +4,7 @@
 
 本开发计划严格基于以下文档执行：
 
-- [PRD-PDF切分需求.md](D:\projects01\pdf-convert\docs\PRD-PDF切分需求.md)
+- [PRD-Markdown格式化需求(Phase3).md](D:\projects01\pdf-convert\docs\PRD-Markdown格式化需求(Phase3).md)
 - [技术方案-Markdown格式化(Phase3).md](D:\projects01\pdf-convert\docs\技术方案-Markdown格式化(Phase3).md)
 
 后续 Phase 3 的编码、测试、评审与验收，统一以本计划为执行基线。若实现过程中需要调整边界、数据结构、模块职责或输出契约，必须先更新技术方案与本开发计划，再进入编码。
@@ -17,9 +17,9 @@
 
 - 输入来自 Phase 2 输出目录：
   - `extract_manifest.json`
-  - draft `.md`
   - `content.json`
   - `assets/`
+  - 可选 draft `.md`（仅作辅助提示，不是强依赖）
 - 输出：
   - 同名最终 `.md`
   - `review_report.json`
@@ -41,6 +41,7 @@
 - `markdown-it-py`、`mdformat`、`mdformat-gfm` 必须锁定版本
 - `markdown-it-py` 必须使用 `MarkdownIt("gfm-like")`
 - `content.json` 是完整性对账的唯一事实来源
+- draft `.md` 缺失时不应阻断主流程
 - `md_normalizer.py` 不允许删除内容块
 - 对外输出顺序必须保持与 Phase 2 切片顺序一致
 - `--copy-assets` 默认 `true`
@@ -447,14 +448,15 @@ D:\projects01\pdf-convert\
 ### T13. 实现表格与图片修复
 
 - 简单表格重建为 GFM pipe table
-- 复杂表格保留 `fallback_html` 或 `fallback_image`
+- 嵌套表格重组为“概览表 + 子章节/引用说明”
+- 复杂表格保留 `fallback_image`
 - 图片引用缺失时补回
 - 图注缺失时回填 `alt`
 
 完成标准：
 
 - `table_rebuilt`
-- `table_fallback_html_applied`
+- `nested_table_restructured`
 - `table_fallback_image_applied`
 - `image_reference_restored`
 - `image_caption_filled`
@@ -725,7 +727,7 @@ Phase 3 整体完成，必须同时满足：
 
 预案：
 
-- 先保留 `fallback_html`
+- 先重组为纯 Markdown 结构
 - 再回退 `fallback_image`
 - 严禁静默丢表
 

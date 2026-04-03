@@ -4,12 +4,12 @@
 This repository implements a four-phase PDF-to-Markdown pipeline.
 
 - `pdf_slicer/`: Phase 1 logic for PDF inspection, chapter recognition, split planning, and slice writing.
-- `src/pdf_extract/`: Phase 2 extraction from sliced PDFs into `content.json`, Markdown drafts, and assets.
-- `src/md_format/`: Phase 3 normalization, repair, rendering, coverage audit, and post-checks.
-- `src/md_merge/`: Phase 4 validation, overlap removal, asset relinking, and final Markdown merge.
+- `src/pdf_extract/`: Phase 2 extraction using PyMuPDF4LLM into `content.json`, Markdown drafts, and assets.
+- `src/md_format/`: Phase 3 normalization, repair via mdformat, rendering, coverage audit, and post-checks.
+- `src/md_merge/`: Phase 4 validation, overlap resolution, asset relinking, and final Markdown merge.
 - Top-level CLIs: `split_pdf.py`, `phase2_extract.py`, `phase3_format.py`, `phase4_merge.py`.
 - `tests/`: pytest coverage for each phase plus CLI and fixture support in `conftest.py`.
-- `docs/`: PRD, phase plans, and technical design notes.
+- `docs/`: PRD, phase plans, and technical design notes for all four phases.
 
 Keep generated outputs in temporary folders such as `*_split`, `*_extract`, `*_format`, and `*_merged`; do not mix them into source packages.
 
@@ -17,7 +17,7 @@ Keep generated outputs in temporary folders such as `*_split`, `*_extract`, `*_f
 - `python -m venv .venv && .\.venv\Scripts\Activate.ps1`: create and activate a local virtual environment.
 - `pip install -r requirements.txt`: install runtime and test dependencies.
 - `pytest`: run the full test suite configured by `pytest.ini`.
-- `pytest tests/test_phase4_pipeline_smoke.py`: run a focused phase-level smoke test.
+- `pytest tests/test_phase*_pipeline_smoke.py`: run focused phase-level smoke tests.
 - `python split_pdf.py input.pdf --output-dir out_split`: run Phase 1 manually.
 - `python phase2_extract.py --input-manifest out_split/manifest.json`: run Phase 2.
 - `python phase3_format.py --input-dir out_extract`: run Phase 3.

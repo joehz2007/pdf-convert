@@ -2,7 +2,7 @@
 
 ## 1. 目标与范围
 
-基于 [PRD-PDF切分需求.md](D:\projects01\pdf-convert\docs\PRD-PDF切分需求.md)、[需求.txt](D:\projects01\pdf-convert\docs\需求.txt) 以及 [技术方案-Markdown格式化(Phase3).md](D:\projects01\pdf-convert\docs\技术方案-Markdown格式化(Phase3).md) 中已经冻结的上下游契约，Phase 4 的职责应收敛为：
+基于 [PRD-校验与拼接需求(Phase4).md](D:\projects01\pdf-convert\docs\PRD-校验与拼接需求(Phase4).md)、[技术方案-Markdown格式化(Phase3).md](D:\projects01\pdf-convert\docs\技术方案-Markdown格式化(Phase3).md) 以及 [需求.txt](D:\projects01\pdf-convert\docs\需求.txt) 中已经冻结的上下游契约，Phase 4 的职责应收敛为：
 
 - 消费 Phase 3 输出的最终版 Markdown、`review_report.json`、`format_manifest.json`
 - 按章节顺序对所有切片 Markdown 执行**全局校验**
@@ -30,14 +30,16 @@
 
 ### Phase 2：内容提取
 
-- 从切片 PDF 中提取 Markdown draft
-- 输出 `content.json`、图片资源、页级与块级追溯信息
+- 从切片 PDF 中提取结构化内容与可追溯元数据
+- 输出 `content.json`、`extract_manifest.json`、图片资源、页级与块级追溯信息
 - 生成 `dedupe_key`、`is_overlap`、`source_page` 等后续去重所需的基础元数据
+- 若存在 draft Markdown，其定位仅为可选调试/人工抽查产物
 
 ### Phase 3：Markdown 格式化
 
-- 对 `draft + content.json` 做完整性对账
+- 以 `content.json` 为事实基线做完整性对账
 - 修复标题、列表、代码块、表格、图片引用等结构问题
+- 若存在 draft Markdown，仅作为辅助提示而不是主事实输入
 - 输出章节级最终 Markdown、`review_report.json`、`format_manifest.json`
 
 ### Phase 4：校验与拼接

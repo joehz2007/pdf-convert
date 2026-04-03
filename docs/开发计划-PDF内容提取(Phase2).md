@@ -4,6 +4,7 @@
 
 本开发计划严格基于以下文档执行：
 
+- [PRD-PDF内容提取需求(Phase2).md](D:\projects01\pdf-convert\docs\PRD-PDF内容提取需求(Phase2).md)
 - [技术方案-PDF内容提取(Phase2).md](D:\projects01\pdf-convert\docs\技术方案-PDF内容提取(Phase2).md)
 
 后续 Phase 2 的编码、测试、评审与验收，统一以本计划为执行基线。若实现过程中需要调整边界、数据结构或模块职责，必须先更新本计划与对应技术方案，再开始编码。
@@ -17,10 +18,10 @@
 - 仅支持 **数字原生 / 具备可提取文本层** 的 PDF 切片
 - 输入来自 Phase 1 的 `manifest.json` 与切片 PDF
 - 输出：
-  - 同名 `.md` 草稿文件
   - `content.json`
   - `extract_manifest.json`
   - `assets/` 图片资源
+  - 可选同名 `.md` 草稿文件（默认开启，仅供人工检查与调试）
 
 ### 2.2 明确不做
 
@@ -44,8 +45,8 @@
 采用“先打通主链路，再补齐结构化细节”的顺序推进，分为 4 个里程碑：
 
 1. **M1 最小可用链路**
-2. **M2 结构化结果落地**
-3. **M3 表格与图片增强**
+2. **M2 文档结构与结构化结果落地**
+3. **M3 表格、代码块与图片增强**
 4. **M4 稳定性与验收闭环**
 
 任何里程碑未通过定义的完成标准，不进入下一阶段。
@@ -77,8 +78,12 @@ D:\projects01\pdf-convert\
       errors.py
       manifest_loader.py
       precheck.py
+      document_structure_builder.py
       markdown_extractor.py
+      table_extractor.py
+      code_block_extractor.py
       metadata_builder.py
+      content_assembler.py
       assets_exporter.py
       writer.py
       pipeline.py
@@ -186,15 +191,20 @@ D:\projects01\pdf-convert\
 最低字段：
 
 - `type`
+- `table_id`
+- `table_kind`
+- `parent_table_id`
+- `child_table_refs`
 - `source_page`
 - `bbox`
 - `table_strategy_used`
 - `table_fallback_used`
 - `table_retry_pages`
+- `render_strategy`
 - `headers`
 - `rows`
 - `markdown`
-- `fallback_html`
+- `notes`
 - `fallback_image`
 
 #### `ImageNode`
@@ -231,7 +241,7 @@ D:\projects01\pdf-convert\
 
 ## M1：最小可用链路
 
-目标：完成从 Phase 1 输入到同名 `.md` 输出的最短闭环。
+目标：完成从 Phase 1 输入到 `content.json` / `extract_manifest.json` 输出的最短闭环，并支持可选 draft `.md` 写出。
 
 ### T1. 建立项目骨架
 
@@ -302,6 +312,18 @@ D:\projects01\pdf-convert\
 - 页顺序正确
 - 不写图片到磁盘
 
+### T5A. 实现 `document_structure_builder.py`
+
+- 基于页级内容识别标题、章节层级与 section tree
+- 生成 `section_id`
+- 为块节点提供 `section_id` 归属
+
+完成标准：
+
+- `content.json` 中可稳定写出 `document_outline`
+- 每个块可追溯到章节节点或显式标记为未归属
+- 切片与章节节点映射可写入 `section_refs`
+
 ### T6. 实现 `pipeline.py` 最小编排
 
 流程限定为：
@@ -328,14 +350,16 @@ D:\projects01\pdf-convert\
 
 完成标准：
 
-- 单个切片可产出同名 `.md`
+- 单个切片可至少产出 `content.json` 与 `extract_manifest.json` 中对应状态
+- 若 `--emit-md=true`，可额外产出同名 `.md`
 - 多切片可批量运行
 - 出错切片不影响总体状态汇总
 - `--workers=1` 与 `--workers>1` 的行为一致
 
 ### T7. 实现 `writer.py` 最小版本
 
-- 写 `.md`
+- 写 `content.json`
+- 按配置可选写 `.md`
 - 拷贝 `source.pdf`
 - 写基础版 `extract_manifest.json`
 - 生成编号目录，如 `001-第一章-系统概述/`
@@ -344,13 +368,15 @@ D:\projects01\pdf-convert\
 
 - 输出目录结构符合技术方案
 - `source.pdf` 已落盘
+- `content.json` 已落盘
 - `extract_manifest.json` 包含全局计数和切片级状态
 
 ### M1 验收门槛
 
 - 至少 1 份数字原生 PDF 样本全链路成功
 - `phase2_extract.py --help` 可用
-- `.md` 文件命名与切片同名
+- `content.json` 与 `extract_manifest.json` 可被后续模块消费
+- 若 `--emit-md=true`，`.md` 文件命名与切片同名
 - `extract_manifest.json` 结构可被后续模块消费
 
 ---
@@ -374,6 +400,17 @@ D:\projects01\pdf-convert\
 - `writer` 不再自己拼接数据
 - `stats` 至少包含 `char_count`、`table_count`、`image_count`
 - 人工复核标记逻辑可被测试覆盖
+
+### T8A. 实现 `content_assembler.py`
+
+- 汇总 `document_structure_builder`、`markdown_extractor`、`table_extractor`、`code_block_extractor`、`assets_exporter` 输出
+- 统一生成 `ContentResult`
+- 冻结 `section_refs` 与章节映射写盘逻辑
+
+完成标准：
+
+- `content_assembler` 成为结构化结果的唯一汇总点
+- `content.json` 与 `extract_manifest.json` 中的章节映射保持一致
 
 ### T9. 实现普通块提取
 
@@ -425,11 +462,25 @@ D:\projects01\pdf-convert\
 - 使用 `page.find_tables()`
 - 生成 `TableNode`
 - 输出 `headers / rows / markdown`
+- 识别 `simple / nested / cross_page` 等 `table_kind`
 
 完成标准：
 
 - 常规表格可落成 `TableNode`
 - `table_strategy_used` 可追踪
+- 嵌套表格能写出 `parent_table_id / child_table_refs / render_strategy`
+
+### T12A. 实现 `code_block_extractor.py`
+
+- 独立识别代码块边界
+- 保留 `language`、`code_lines`、原始缩进与 fenced code 友好表示
+- 避免代码被普通段落吞并
+
+完成标准：
+
+- `BlockNode.type=code` 可稳定落盘
+- `code_lines` 结构可被后续 Phase 3 直接消费
+- 示例代码场景有单测覆盖
 
 ### T13. 实现表格回退策略
 
@@ -443,6 +494,18 @@ D:\projects01\pdf-convert\
 - 页级重试逻辑真实生效
 - `table_fallback_used` 落盘
 - `table_retry_pages` 落盘
+
+### T13A. 实现嵌套表格关系建模
+
+- 识别父表、子表和所属父行/父单元格
+- 生成 `notes` / `reference_labels`
+- 为下游提供 `render_strategy=nested_sections`
+
+完成标准：
+
+- 嵌套表格不会直接退化成无结构的大块 HTML
+- `content.json` 中可明确看出父子表关系和推荐 Markdown 表达路径
+- 无法稳定建模时，提升 `manual_review_required`
 
 ### T14. 实现 `assets_exporter.py`
 
@@ -468,7 +531,7 @@ D:\projects01\pdf-convert\
 ### T16. 实现复杂表格回退
 
 - 无法稳定 Markdown 化时：
-  - 写 `fallback_html`
+  - 优先保留 `notes + reference_labels + render_strategy`
   - 或导出截图写 `fallback_image`
 
 完成标准：
@@ -611,7 +674,8 @@ python phase2_extract.py --input-manifest <manifest.json> --output-dir <dir> --e
 
 - 进程退出码正确
 - 输出目录结构正确
-- `.md`、`content.json`、`extract_manifest.json` 均生成
+- `content.json`、`extract_manifest.json` 均生成
+- 当 `--emit-md` 开启时，`.md` 额外生成
 
 ---
 
@@ -674,7 +738,7 @@ Phase 2 整体完成，必须同时满足：
 预案：
 
 - 页级回退
-- HTML 回退
+- 结构化关系保留 + 子章节化表达
 - 截图回退
 
 ### 风险 3：图片图注绑定误判

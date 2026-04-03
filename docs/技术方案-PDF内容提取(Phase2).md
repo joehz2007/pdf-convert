@@ -2,11 +2,11 @@
 
 ## 1. 目标与范围
 
-基于 [PRD-PDF切分需求.md](D:\projects01\pdf-convert\docs\PRD-PDF切分需求.md) 与当前收敛后的实施范围，Phase 2 的职责定义如下：
+基于 [PRD-PDF内容提取需求(Phase2).md](D:\projects01\pdf-convert\docs\PRD-PDF内容提取需求(Phase2).md) 以及 [PRD-PDF切分需求.md](D:\projects01\pdf-convert\docs\PRD-PDF切分需求.md) 中冻结的上游输入契约，Phase 2 的职责定义如下：
 
 - 消费 Phase 1 产出的切片 PDF 与 `manifest.json`
 - 面向**数字原生/具备可提取文本层的 PDF 切片**执行内容提取
-- 输出与切片 PDF 同名的 Markdown 文件
+- 输出结构化 `content.json`、资源文件与全局 `extract_manifest.json`，并可选输出与切片 PDF 同名的 Markdown 草稿
 - 同步输出结构化元数据，供 Phase 3 校对与 Phase 4 合并使用
 
 当前阶段**不建设 OCR 主链路**。因此本期范围明确为：
@@ -25,20 +25,21 @@
 ### Phase 2：内容提取
 
 - 负责从 PDF 中**确定性提取**内容
-- 负责生成**草稿版 Markdown**
-- 负责保留页码、块顺序、表格结构、图片引用、重叠页标记等可追溯信息
+- 负责输出 `content.json`、`extract_manifest.json`、资源文件等**结构化事实结果**
+- 负责保留页码、块顺序、文档树、表格结构、图片引用、重叠页标记等可追溯信息
+- 可选生成**草稿版 Markdown**，用于人工检查与调试
 - 不负责高质量精排，不负责人工修辞级修正
 
 ### Phase 3：校对与格式修正
 
-- 负责检查 Markdown 是否完整、是否有遗漏
+- 负责检查基于 `content.json` 渲染出的 Markdown 是否完整、是否有遗漏
 - 负责修正标题层级、列表、表格、代码块等格式问题
 - 负责基于 `content.json` 做完整性对账
-- 负责对草稿 Markdown 做最终发布前清洗
+- 若存在草稿 Markdown，可将其作为辅助提示，而不是主事实输入
 
 ### 结论
 
-Phase 2 输出的 `.md` 定位为 **draft（草稿）**，满足“可读、可校对、可追溯”，但不承担最终精排责任。这样既满足 `需求.txt` 中“Phase 2 输出 MD”的要求，也不会侵占 Phase 3 的职责。
+Phase 2 的规范输出应是 `content.json + extract_manifest.json + assets/`。若输出 `.md`，其定位仅为 **draft（草稿）**，满足“可读、可人工抽查”，但不承担下游权威事实输入或最终精排责任。
 
 ---
 
@@ -88,7 +89,7 @@ Phase 2 以 Phase 1 输出目录为输入，最小输入集如下：
 
 - `source.pdf`：原始切片 PDF 的工作副本
 - `content.json`：结构化提取结果，是 Phase 2 的规范输出
-- `同名 .md`：草稿版 Markdown，供 Phase 3 校对使用
+- `同名 .md`：可选草稿版 Markdown，供人工检查、调试与辅助对照使用
 - `assets/`：提取出的图片资源
 - `extract_manifest.json`：全局任务状态、统计信息与异常记录
 
@@ -111,9 +112,9 @@ Markdown Extractor (PyMuPDF4LLM)
         ↓
 Metadata Builder (PyMuPDF)
         ↓
-Draft Writer
+Optional Draft Writer
         ↓
-content.json + same-name .md + assets + extract_manifest.json
+content.json + optional same-name .md + assets + extract_manifest.json
 ```
 
 ### 4.2 主流程
@@ -124,8 +125,32 @@ content.json + same-name .md + assets + extract_manifest.json
 4. 若切片无有效文本层，则判定该切片为当前版本不支持输入，记录失败状态并继续处理其他切片
 5. 使用 PyMuPDF4LLM 生成按页切分的 Markdown chunks
 6. 将 page chunks 交给 `metadata_builder`，由其基于 PyMuPDF 逐页补充块级元数据、表格结构、图片资源信息，并合流为统一的 `ContentResult`
-7. `writer.py` 仅消费 `ContentResult`，写出 `content.json`、同名 `.md`、`assets/`
+7. `writer.py` 仅消费 `ContentResult`，写出 `content.json`、`assets/`，并按配置选择是否写出同名 `.md`
 8. 更新 `extract_manifest.json`
+
+---
+
+### 4.3 能力模块拆分原则
+
+为保证复杂 PDF 场景可测试、可演进，Phase 2 不应只是一条“抽完就写”的扁平流水线，而应拆成以下独立能力模块：
+
+- `document_structure_builder`
+  - 负责章节、标题层级、section tree、段落归属建模
+  - 输出文档树与块树的基础骨架
+- `table_extractor`
+  - 负责简单表格、复杂表格、跨页表格、嵌套表格的独立处理
+  - 显式识别父表、子表、跨页续表与引用关系
+  - 输出结构化表格 AST、Markdown、引用说明和截图回退；复杂 HTML 仅作为经评审确认后的例外方案
+- `code_block_extractor`
+  - 负责代码区域识别、边界保持、语言候选和块类型判定
+  - 避免代码被普通段落吞并
+- `assets_exporter`
+  - 负责图片导出、图注绑定与资源路径生成
+- `content_assembler`
+  - 负责把文档树、块树、表格、代码块、图片与页级映射汇总为统一 `content.json`
+- `draft_writer`
+  - 仅负责把提取结果投影为可读草稿 Markdown
+  - 不影响结构化事实正确性
 
 ---
 
@@ -315,7 +340,16 @@ Markdown 表格特征的最低判定规则建议为：
 - 存在表头分隔行，如 `| --- |`
 - 或 chunk 元数据中已标记表格块
 
-#### 页级回退策略
+#### 页级多级回退策略
+
+当首次调用 `lines_strict` 策略未生成 Markdown 表格时，对命中的特定页依次尝试后续策略，直到成功或策略耗尽：
+
+```python
+FALLBACK_TABLE_STRATEGIES = ("lines", "text")
+```
+
+- **`lines`**：放宽线条检测规则，适用于边线不完整但仍有部分线条的表格
+- **`text`**：不依赖线条，基于文本对齐推断表格结构，适用于 Word 导出的无边框/隐形线条表格
 
 对命中的特定页单独再次调用：
 
@@ -325,7 +359,7 @@ retry_chunks = pymupdf4llm.to_markdown(
     page_chunks=True,
     write_images=False,
     use_ocr=False,
-    table_strategy="lines",
+    table_strategy=fallback_strategy,
     pages=[page_index],
 )
 ```
@@ -336,6 +370,7 @@ retry_chunks = pymupdf4llm.to_markdown(
 - 项目内部对外展示页码统一使用 **1-based**
 - 因此若当前处理页来自 `source_page`，则此处应传 `pages=[source_page - 1]`
 - 仅对单页重试，不对整个切片重跑
+- 每级回退后重新检测是否成功，已成功的页不再进入下一级回退
 
 #### 合并策略
 
@@ -346,7 +381,7 @@ retry_chunks = pymupdf4llm.to_markdown(
 
 回退结果需在 `content.json` 中记录：
 
-- `table_strategy_used`
+- `table_strategy_used`（记录最终生效的策略）
 - `table_fallback_used`
 - `table_retry_pages`
 
@@ -417,6 +452,7 @@ class ContentResult:
 ```json
 {
   "type": "paragraph",
+  "section_id": "sec-1.2",
   "text": "这里是正文内容",
   "source_page": 3,
   "bbox": [50, 100, 500, 200],
@@ -437,6 +473,37 @@ class ContentResult:
 - `footer`
 - `footnote`
 
+#### 代码块检测信号
+
+代码块检测采用多信号评分机制（阈值 ≥ 3），以适配数字原生 PDF 和 Word 导出 PDF 两类输入：
+
+- **Signal 1 - 字体比例**（0-3 分）：等宽字体字符占比 ≥ 80% 得 3 分。支持 Word 子集嵌入字体名（如 `BCDFGH+Consolas`）的子串匹配。
+- **Signal 2 - 结构模式**（0-3 分）：缩进行比例 ≥ 60% 或 代码关键字+符号同时出现 得 3 分。
+- **Signal 3 - Bbox 左缩进**（0-2 分）：当 block 左边距相对页面正文区域的中位左边距右移 ≥ 30pt，且行级左坐标偏差 ≤ 15pt（一致缩进），得 2 分。此信号专门应对 Word 导出的代码段（缩进通过 bbox 位置而非空格字符实现）。
+- **负向预断路**：TOC 行占比 ≥ 40% 或 bullet prose 占比 ≥ 50% 时直接排除。
+
+#### 代码块结构定义
+
+代码块节点建议如下：
+
+```json
+{
+  "type": "code",
+  "section_id": "sec-3.1",
+  "source_page": 18,
+  "bbox": [40, 120, 520, 420],
+  "reading_order": 7,
+  "language": "java",
+  "code_lines": [
+    "public static String encrypt(String plainText) {",
+    "    return cipher.doFinal(plainText);",
+    "}"
+  ],
+  "markdown": "```java\\npublic static String encrypt(String plainText) {\\n    return cipher.doFinal(plainText);\\n}\\n```",
+  "dedupe_key": "18:7f2a:code"
+}
+```
+
 #### 表格结构定义
 
 表格节点建议如下：
@@ -444,16 +511,22 @@ class ContentResult:
 ```json
 {
   "type": "table",
+  "table_id": "tbl-2-1",
+  "table_kind": "simple",
+  "parent_table_id": null,
+  "child_table_refs": [],
+  "section_id": "sec-2.1",
   "source_page": 12,
   "bbox": [10, 20, 500, 260],
   "table_strategy_used": "lines_strict",
+  "render_strategy": "gfm_table",
   "headers": ["字段", "说明"],
   "rows": [
     ["name", "章节名"],
     ["page", "页码"]
   ],
   "markdown": "| 字段 | 说明 |\\n| --- | --- |\\n| name | 章节名 |",
-  "fallback_html": null,
+  "notes": [],
   "fallback_image": null
 }
 ```
@@ -470,8 +543,18 @@ class ContentResult:
 复杂表格处理策略：
 
 1. 优先保留结构化单元格数据
-2. 若无法稳定转 Markdown，则写入 `fallback_html`
-3. 若仍无法稳定表示，则导出表格区域截图到 `assets/`，并在节点中写入 `fallback_image`
+2. 若识别为嵌套表格，则显式输出：
+   - `table_kind = "nested"`
+   - `parent_table_id`
+   - `child_table_refs`
+   - `render_strategy = "nested_sections"`
+   - `notes` / `reference_labels`
+3. `nested_sections` 的推荐表达方式为：
+   - 外层表先输出精简概览表
+   - 内层子表按父行/父单元格归属提升为紧邻的子章节、列表或引用块
+   - 通过引用说明把父表项与子表连接起来
+4. 若仍无法稳定表示，则导出表格区域截图到 `assets/`，并在节点中写入 `fallback_image`
+5. 默认不直接生成复杂 HTML；若后续证明纯 Markdown 无法满足交付需求，应单独评审后再启用 HTML 方案
 
 ---
 
@@ -509,6 +592,7 @@ p0015_img02.jpeg
 ```json
 {
   "type": "image",
+  "section_id": "sec-1.3",
   "source_page": 3,
   "bbox": [30, 100, 420, 380],
   "asset_path": "assets/p0003_img01.png",
@@ -533,7 +617,7 @@ p0015_img02.jpeg
 
 - 创建单切片输出目录
 - 写 `content.json`
-- 写同名 `.md`
+- 按配置可选写同名 `.md`
 - 写图片资源到 `assets/`
 - 汇总任务结果到 `extract_manifest.json`
 
@@ -590,6 +674,22 @@ dedupe_key = source_page + normalized_text_hash + bbox_hash
   "display_title": "第一章 系统概述",
   "start_page": 1,
   "end_page": 18,
+  "document_outline": [
+    {
+      "section_id": "sec-1",
+      "title": "第一章 系统概述",
+      "level": 1,
+      "source_page": 1,
+      "parent_id": null
+    },
+    {
+      "section_id": "sec-1.1",
+      "title": "1.1 项目背景",
+      "level": 2,
+      "source_page": 1,
+      "parent_id": "sec-1"
+    }
+  ],
   "source_pages": [
     {
       "slice_page": 1,
@@ -623,6 +723,7 @@ dedupe_key = source_page + normalized_text_hash + bbox_hash
   "created_at": "2026-03-21T10:00:00Z",
   "generator_version": "phase2-v1",
   "scope": "digital-pdf-only",
+  "document_outline": [],
   "total_slices": 12,
   "success_count": 11,
   "failed_count": 1,
@@ -630,9 +731,17 @@ dedupe_key = source_page + normalized_text_hash + bbox_hash
   "total_elapsed_ms": 18342,
   "slices": [
     {
+      "order_index": 1,
       "slice_file": "第一章 系统概述（1-18）.pdf",
       "content_file": "001-第一章-系统概述/content.json",
+      "section_refs": [
+        {
+          "section_id": "sec-1",
+          "role": "primary"
+        }
+      ],
       "md_file": "001-第一章-系统概述/第一章 系统概述（1-18）.md",
+      "emit_draft_md": true,
       "status": "success",
       "warning_count": 0,
       "manual_review_required": false,
@@ -641,6 +750,11 @@ dedupe_key = source_page + normalized_text_hash + bbox_hash
   ]
 }
 ```
+
+说明：
+
+- `section_refs` 用于把“单切片输出”与“全局文档树节点”显式关联起来，避免后续阶段只能靠标题文本反推章节归属。
+- `source_pages[].markdown` 仍建议保留为调试快照，但 Phase 3/4 的事实判断优先使用块级、页级与章节映射数据，而不是把该字段视为唯一基线。
 
 ---
 
@@ -660,7 +774,7 @@ dedupe_key = source_page + normalized_text_hash + bbox_hash
 满足以下任一条件时，将切片标记为 `manual_review_required=true`：
 
 - Markdown 为空或字符数异常低
-- 表格无法稳定映射，只能退回 HTML 或截图
+- 嵌套表格关系无法稳定识别，或只能退回截图
 - 图片存在但图注绑定失败
 - overlap 页内容缺少稳定去重键
 - 页级 Markdown 与页级块统计明显不一致
@@ -728,7 +842,7 @@ dedupe_key = source_page + normalized_text_hash + bbox_hash
 ### 11.3 人工验收项
 
 - 抽查 Markdown 与原 PDF 是否存在明显整段遗漏
-- 抽查表格是否按预期转为 Markdown / HTML / 截图占位
+- 抽查表格是否按预期转为 Markdown、子章节/引用说明或截图占位
 - 抽查图片资源路径与图注绑定
 - 抽查 overlap 页是否被正确保留并标记
 
@@ -753,7 +867,7 @@ dedupe_key = source_page + normalized_text_hash + bbox_hash
 
 - 增加 `find_tables()` 结果落盘
 - 增加图片导出与图注绑定
-- 增加复杂表格回退策略
+- 增加嵌套表格关系建模与复杂表格回退策略
 
 ### Milestone 4：校对支撑能力
 

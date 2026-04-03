@@ -4,7 +4,7 @@
 
 本开发计划严格基于以下文档执行：
 
-- [PRD-PDF切分需求.md](D:\projects01\pdf-convert\docs\PRD-PDF切分需求.md)
+- [PRD-校验与拼接需求(Phase4).md](D:\projects01\pdf-convert\docs\PRD-校验与拼接需求(Phase4).md)
 - [技术方案-校验与拼接(Phase4).md](D:\projects01\pdf-convert\docs\技术方案-校验与拼接(Phase4).md)
 
 后续 Phase 4 的编码、测试、评审与验收，统一以本计划为执行基线。若实现过程中需要调整边界、数据结构、模块职责、去重规则或输出契约，必须先更新技术方案与本开发计划，再进入编码。

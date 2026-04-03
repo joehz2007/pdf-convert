@@ -4,10 +4,10 @@ import base64
 
 import pytest
 
-from pdf_extract.contracts import BlockNode, ImageNode, SliceTask, TableNode
+from pdf_extract.contracts import BlockNode, ImageNode, PageContent, SliceTask, TableNode
 from pdf_extract.errors import EmptyExtractionError, PageMappingError
 from pdf_extract.markdown_extractor import extract_markdown_chunks
-from pdf_extract.metadata_builder import _repair_section_title_from_fields, apply_inline_clause_breaks, build_content_result, build_dedupe_key, classify_block, format_description_text, is_code_block, is_complex_table, normalize_cell_text, normalize_section_title
+from pdf_extract.metadata_builder import _bracket_balance, _is_code_fragment, _repair_section_title_from_fields, apply_inline_clause_breaks, build_content_result, build_dedupe_key, classify_block, escape_html, filter_blocks_overlapping_tables, format_description_text, is_code_block, is_complex_table, normalize_cell_text, normalize_section_title, stitch_cross_page_code_blocks
 
 PNG_BYTES = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j2mQAAAAASUVORK5CYII=")
 
@@ -265,12 +265,97 @@ def test_metadata_builder_splits_nested_tables_into_parent_and_child(create_pdf,
     assert child.parent_table_id == parent.table_id
     assert parent.child_table_ids == [child.table_id]
     assert child.section_title == "Transfers description (Objects of Transfers)"
+    assert parent.data_attributes["data-table-id"] == "p0001-t01"
+    assert parent.data_attributes["data-child-table-ids"] == child.table_id
+    assert child.data_attributes["data-parent-table-id"] == "p0001-t01"
+    assert parent.rendered_markdown is not None
+    assert "`data-table-id=p0001-t01`" in parent.rendered_markdown
+    assert "| Field | Required | Type | Description |" in parent.rendered_markdown
+    assert child.rendered_markdown is not None
+    assert "`data-parent-table-id=p0001-t01`" in child.rendered_markdown
+    assert "**Transfers description (Objects of Transfers)**" in child.rendered_markdown
     assert parent.fallback_html is not None and 'data-table-role="parent"' in parent.fallback_html
     assert parent.fallback_image is None
     assert "array of objects" in parent.fallback_html
     assert child.fallback_html is not None and 'data-parent-table-id="p0001-t01"' in child.fallback_html
     assert child.fallback_image is None
     assert "complex_table:1:1" in result.warnings
+
+
+def test_metadata_builder_repairs_split_field_identifiers_in_parameter_tables(create_pdf):
+    pdf_path = create_pdf(
+        "metadata-split-field-identifiers.pdf",
+        pages=[{"body": "Split field identifiers."}],
+    )
+    task = SliceTask(
+        slice_number=1,
+        slice_file=pdf_path.name,
+        source_path=pdf_path,
+        display_title="Split Field Identifiers",
+        start_page=1,
+        end_page=1,
+    )
+    chunks = extract_markdown_chunks(pdf_path)
+    chunks[0]["table_snapshots"] = [
+        {
+            "bbox": [10, 20, 300, 220],
+            "headers": ["Field", "Req", "Type", "Description"],
+            "rows": [
+                ["settleCurr ency", "Y", "string", "Settlement currency"],
+                ["origPaym entId", "C", "string", "Original payment id"],
+                ["bankAcco untNumber", "Y", "string", "Beneficiary account number"],
+                ["currency supportC urrency", "N", "Array of strings", "Supported currencies"],
+            ],
+            "markdown": "",
+        }
+    ]
+
+    result = build_content_result(task, chunks)
+
+    table = result.source_pages[0].tables[0]
+    assert [row[0] for row in table.rows] == [
+        "settleCurrency",
+        "origPaymentId",
+        "bankAccountNumber",
+        "currency supportCurrency",
+    ]
+
+
+def test_metadata_builder_merges_suffix_only_continuation_row_into_previous_field(create_pdf):
+    pdf_path = create_pdf(
+        "metadata-field-suffix-continuation.pdf",
+        pages=[{"body": "Field suffix continuation."}],
+    )
+    task = SliceTask(
+        slice_number=1,
+        slice_file=pdf_path.name,
+        source_path=pdf_path,
+        display_title="Field Suffix Continuation",
+        start_page=1,
+        end_page=1,
+    )
+    chunks = extract_markdown_chunks(pdf_path)
+    chunks[0]["table_snapshots"] = [
+        {
+            "bbox": [10, 20, 300, 240],
+            "headers": ["Field", "Req", "Type", "Description"],
+            "rows": [
+                ["totalConfirmNumbe", "N", "INT", "The number of blocks we consider necessary for this transaction to be permanently confirmed. For"],
+                ["r", "", "", "example: 32"],
+            ],
+            "markdown": "",
+        }
+    ]
+
+    result = build_content_result(task, chunks)
+
+    table = result.source_pages[0].tables[0]
+    assert table.rows == [[
+        "totalConfirmNumber",
+        "N",
+        "INT",
+        "The number of blocks we consider necessary for this transaction to be permanently confirmed. For\nexample: 32",
+    ]]
 
 
 def test_metadata_builder_rejects_page_mapping_mismatch(create_pdf):
@@ -471,6 +556,10 @@ def test_repair_section_title_equal_length_not_repaired():
     ) == "xankAddress Details"
 
 
+def test_normalize_cell_text_keeps_camel_case_word_followed_by_prose():
+    assert normalize_cell_text("Derive a SubKey using both:") == "Derive a SubKey using both:"
+
+
 
 def test_metadata_builder_drops_duplicate_sentence_header_from_complex_table(create_pdf):
     pdf_path = create_pdf(
@@ -509,10 +598,45 @@ def test_metadata_builder_drops_duplicate_sentence_header_from_complex_table(cre
     table = result.source_pages[0].tables[0]
     assert table.headers == []
     assert table.rows[0][0] == "Step 1"
-    assert table.fallback_html is not None
-    assert "<thead>" not in table.fallback_html
-    assert "<th>request),</th>" not in table.fallback_html
+    assert table.rendered_markdown is not None
+    assert "<thead>" not in table.rendered_markdown
+    assert "<th>request),</th>" not in table.rendered_markdown
+    assert "`data-table-id=p0001-t01`" in table.rendered_markdown
 
+
+
+def test_metadata_builder_drops_descriptor_row_when_headers_already_normalized(create_pdf):
+    pdf_path = create_pdf(
+        "metadata-duplicate-parameter-header.pdf",
+        pages=[{"body": "Duplicate descriptor header row."}],
+    )
+    task = SliceTask(
+        slice_number=1,
+        slice_file=pdf_path.name,
+        source_path=pdf_path,
+        display_title="Duplicate Parameter Header",
+        start_page=1,
+        end_page=1,
+    )
+    chunks = extract_markdown_chunks(pdf_path)
+    chunks[0]["table_snapshots"] = [
+        {
+            "bbox": [10, 20, 300, 220],
+            "headers": ["Field", "Required", "Type", "Description"],
+            "rows": [
+                ["Field", "Req", "Type", "Description"],
+                ["countryCode", "Y", "string", "ISO 3166-1-alpha-2 country code"],
+            ],
+            "markdown": "",
+        }
+    ]
+
+    result = build_content_result(task, chunks)
+
+    table = result.source_pages[0].tables[0]
+    assert table.headers == ["Field", "Required", "Type", "Description"]
+    assert table.rows == [["countryCode", "Y", "string", "ISO 3166-1-alpha-2 country code"]]
+    assert "| Field | Req | Type | Description |" not in (table.rendered_markdown or "")
 
 
 def test_metadata_builder_demotes_step_header_into_first_row(create_pdf):
@@ -555,9 +679,9 @@ def test_metadata_builder_demotes_step_header_into_first_row(create_pdf):
     table = result.source_pages[0].tables[0]
     assert table.headers == []
     assert [row[0] for row in table.rows] == ["Step 1", "Step 2", "Step 3"]
-    assert table.fallback_html is not None
-    assert "<thead>" not in table.fallback_html
-    assert "<td>Step 1</td>" in table.fallback_html
+    assert table.rendered_markdown is not None
+    assert "<thead>" not in table.rendered_markdown
+    assert "| Step 1 | Derive a SubKey using both:" in table.rendered_markdown
 
 
 def test_metadata_builder_demotes_step_header_when_first_row_duplicates_header(create_pdf):
@@ -604,5 +728,161 @@ def test_metadata_builder_demotes_step_header_when_first_row_duplicates_header(c
     table = result.source_pages[0].tables[0]
     assert table.headers == []
     assert [row[0] for row in table.rows] == ["Step 1", "Step 2", "Step 3"]
-    assert table.fallback_html is not None
-    assert "<thead>" not in table.fallback_html
+    assert table.rendered_markdown is not None
+    assert "<thead>" not in table.rendered_markdown
+
+
+def test_filter_blocks_overlapping_tables_removes_embedded_table_text():
+    blocks = [
+        BlockNode(
+            type="paragraph",
+            text="Field Req Type Description",
+            source_page=1,
+            bbox=[90.0, 100.0, 210.0, 120.0],
+            reading_order=1,
+            is_overlap=False,
+            dedupe_key="a",
+        ),
+        BlockNode(
+            type="paragraph",
+            text="Request Parameters:",
+            source_page=1,
+            bbox=[90.0, 70.0, 220.0, 88.0],
+            reading_order=2,
+            is_overlap=False,
+            dedupe_key="b",
+        ),
+    ]
+
+    filtered = filter_blocks_overlapping_tables(blocks, [{"bbox": [83.0, 90.0, 500.0, 300.0]}])
+
+    assert [block.text for block in filtered] == ["Request Parameters:"]
+
+
+
+def test_escape_html_preserves_inline_bold_markup():
+    rendered = escape_html("<b>Supported:</b>\nUSDT, USDC")
+    assert rendered == "<b>Supported:</b><br/>USDT, USDC"
+
+def test_format_description_text_emphasizes_known_labels():
+    rendered = format_description_text("Supported:\nUSDT, USDC")
+    assert rendered.split("\n")[0] == "<b>Supported:</b>"
+
+
+# ---------- bracket balance ----------
+
+def test_bracket_balance_simple():
+    assert _bracket_balance('{"a": 1}') == 0
+    assert _bracket_balance('{"a": {') == 2
+    assert _bracket_balance('}') == -1
+    assert _bracket_balance('[{') == 2
+
+
+def test_bracket_balance_ignores_strings():
+    assert _bracket_balance('"key": "val{ue"') == 0
+    # Outer { opens, but }{ inside string "}{" are ignored; trailing } closes it
+    assert _bracket_balance('{"key": "}{"}'  ) == 0
+
+
+# ---------- _is_code_fragment ----------
+
+def test_is_code_fragment_lone_braces():
+    assert _is_code_fragment("},")
+    assert _is_code_fragment("}")
+    assert _is_code_fragment("],")
+    assert _is_code_fragment("{")
+
+
+def test_is_code_fragment_json_key_value():
+    assert _is_code_fragment('"amount": "0.50655",')
+
+
+def test_is_code_fragment_not_prose():
+    assert not _is_code_fragment("This is a normal sentence.")
+    assert not _is_code_fragment("Request Parameters")
+
+
+# ---------- stitch_cross_page_code_blocks with bracket context ----------
+
+def _make_block(text, btype="paragraph", bbox=None):
+    return BlockNode(
+        type=btype,
+        text=text,
+        bbox=bbox or [90.0, 0.0, 500.0, 12.0],
+        source_page=1,
+        is_overlap=False,
+        reading_order=0,
+        dedupe_key="",
+    )
+
+
+def _make_page(blocks, source_page=1):
+    return PageContent(
+        slice_page=source_page,
+        source_page=source_page,
+        is_overlap=False,
+        markdown="",
+        blocks=blocks,
+        tables=[],
+        images=[],
+    )
+
+
+def test_stitch_permissive_absorbs_json_values():
+    """When previous code block has unclosed brackets, absorb bare JSON values."""
+    code_block = _make_block(
+        '"data": {\n"address":', btype="code"
+    )
+    # Next page: bare string values that don't look like code independently
+    val1 = _make_block('"0x32539Cb22334c875f150D89Dfcb5CbBB99AD9E3a",')
+    val2 = _make_block('"USDC"')
+    closing = _make_block("}")
+    heading = _make_block("## Next Section", btype="heading")
+
+    pages = [
+        _make_page([code_block], source_page=1),
+        _make_page([val1, val2, closing, heading], source_page=2),
+    ]
+    stitch_cross_page_code_blocks(pages)
+
+    # code block should have absorbed val1, val2, closing but not heading
+    assert "0x32539" in pages[0].blocks[-1].text
+    assert "USDC" in pages[0].blocks[-1].text
+    assert "}" in pages[0].blocks[-1].text
+    # Heading remains on page 2
+    assert len(pages[1].blocks) == 1
+    assert pages[1].blocks[0].type == "heading"
+
+
+def test_stitch_conservative_skips_non_code():
+    """When brackets are balanced, don't absorb non-code-looking blocks."""
+    code_block = _make_block('{"a": 1}', btype="code")  # balanced
+    prose = _make_block("This is a normal paragraph.")
+
+    pages = [
+        _make_page([code_block], source_page=1),
+        _make_page([prose], source_page=2),
+    ]
+    stitch_cross_page_code_blocks(pages)
+
+    # Nothing absorbed — prose stays on page 2
+    assert len(pages[1].blocks) == 1
+    assert pages[1].blocks[0].text == "This is a normal paragraph."
+
+
+def test_stitch_permissive_stops_at_heading():
+    """Permissive mode should stop at context breaks like headings."""
+    code_block = _make_block('"items": [', btype="code")
+    heading = _make_block("## New Section", btype="heading")
+    prose = _make_block("Some text after heading.")
+
+    pages = [
+        _make_page([code_block], source_page=1),
+        _make_page([heading, prose], source_page=2),
+    ]
+    stitch_cross_page_code_blocks(pages)
+
+    # Nothing absorbed — heading is a context break
+    assert len(pages[1].blocks) == 2
+
+

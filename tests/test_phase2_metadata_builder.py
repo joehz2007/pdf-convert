@@ -317,7 +317,43 @@ def test_metadata_builder_repairs_split_field_identifiers_in_parameter_tables(cr
         "settleCurrency",
         "origPaymentId",
         "bankAccountNumber",
-        "currency supportCurrency",
+        "supportCurrency",
+    ]
+
+
+def test_metadata_builder_drops_empty_table_rows(create_pdf):
+    pdf_path = create_pdf(
+        "metadata-empty-table-row.pdf",
+        pages=[{"body": "Empty table row."}],
+    )
+    task = SliceTask(
+        slice_number=1,
+        slice_file=pdf_path.name,
+        source_path=pdf_path,
+        display_title="Empty Table Row",
+        start_page=1,
+        end_page=1,
+    )
+    chunks = extract_markdown_chunks(pdf_path)
+    chunks[0]["table_snapshots"] = [
+        {
+            "bbox": [10, 20, 300, 240],
+            "headers": ["Field", "Req", "Type", "Description"],
+            "rows": [
+                ["network", "Y", "enum", "SWIFT"],
+                ["", "", "", ""],
+                ["bankAddress", "Y", "object", "Address of bank"],
+            ],
+            "markdown": "",
+        }
+    ]
+
+    result = build_content_result(task, chunks)
+
+    table = result.source_pages[0].tables[0]
+    assert table.rows == [
+        ["network", "Y", "enum", "SWIFT"],
+        ["bankAddress", "Y", "object", "Address of bank"],
     ]
 
 
@@ -884,5 +920,6 @@ def test_stitch_permissive_stops_at_heading():
 
     # Nothing absorbed — heading is a context break
     assert len(pages[1].blocks) == 2
+
 
 

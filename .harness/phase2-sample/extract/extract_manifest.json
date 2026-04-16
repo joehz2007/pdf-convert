@@ -1,14 +1,14 @@
 {
   "source_manifest": "manifest.json",
   "source_file": "source.pdf",
-  "created_at": "2026-04-03T06:02:48.362792+00:00",
+  "created_at": "2026-04-03T09:21:11.650593+00:00",
   "generator_version": "phase2-v1",
   "scope": "digital-pdf-only",
   "total_slices": 2,
   "success_count": 2,
   "failed_count": 0,
   "total_warnings": 63,
-  "total_elapsed_ms": 4378,
+  "total_elapsed_ms": 4462,
   "slices": [
     {
       "slice_file": "前言（1-23）.pdf",
@@ -17,15 +17,15 @@
       "status": "success",
       "warning_count": 59,
       "manual_review_required": true,
-      "elapsed_ms": 3802,
+      "elapsed_ms": 3936,
       "error_code": null,
       "error_message": null,
       "stage_timings": {
-        "precheck_ms": 85,
-        "markdown_extract_ms": 3120,
-        "metadata_build_ms": 590,
+        "precheck_ms": 96,
+        "markdown_extract_ms": 3287,
+        "metadata_build_ms": 546,
         "write_ms": 7,
-        "total_ms": 3802
+        "total_ms": 3936
       }
     },
     {
@@ -35,22 +35,22 @@
       "status": "success",
       "warning_count": 4,
       "manual_review_required": true,
-      "elapsed_ms": 308,
+      "elapsed_ms": 337,
       "error_code": null,
       "error_message": null,
       "stage_timings": {
-        "precheck_ms": 29,
-        "markdown_extract_ms": 214,
-        "metadata_build_ms": 59,
-        "write_ms": 6,
-        "total_ms": 308
+        "precheck_ms": 32,
+        "markdown_extract_ms": 232,
+        "metadata_build_ms": 66,
+        "write_ms": 7,
+        "total_ms": 337
       }
     }
   ],
   "timings": {
-    "manifest_load_ms": 263,
-    "slice_total_ms": 4110,
+    "manifest_load_ms": 183,
+    "slice_total_ms": 4273,
     "write_manifest_ms": 1,
-    "total_ms": 4378
+    "total_ms": 4462
   }
 }

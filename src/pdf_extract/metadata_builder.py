@@ -1265,7 +1265,8 @@ def clean_table_rows(headers: list[str], rows: list[list]) -> list[list[str]]:
         for index, cell in enumerate(row):
             header = headers[index] if index < len(headers) else ""
             cleaned_row.append(normalize_table_cell(str(cell or ""), header))
-        cleaned_rows.append(cleaned_row)
+        if any(cell.strip() for cell in cleaned_row):
+            cleaned_rows.append(cleaned_row)
     cleaned_rows = _merge_sparse_continuation_rows(headers, cleaned_rows)
     cleaned_rows = [_apply_deprecated_row_markup(row) for row in cleaned_rows]
     while cleaned_rows and row_matches_header_semantics(headers, cleaned_rows[0]):
@@ -1392,6 +1393,15 @@ def _repair_field_cell_fragments(value: str) -> str:
             repaired[-1] = previous + token
         else:
             repaired.append(token)
+    if len(repaired) >= 2:
+        collapsed: list[str] = [repaired[0]]
+        for token in repaired[1:]:
+            previous = collapsed[-1]
+            if _should_drop_redundant_field_prefix(previous, token):
+                collapsed[-1] = token
+            else:
+                collapsed.append(token)
+        repaired = collapsed
     return " ".join(repaired)
 
 
@@ -1407,9 +1417,28 @@ def _should_merge_field_tokens(left: str, right: str) -> bool:
         return True
     if right.islower() and len(right) <= 4 and re.search(r"[a-z][A-Z]", left):
         return True
+    if right.islower() and len(right) <= 8 and re.search(r"[a-z][A-Z]$", left):
+        return True
     if len(right) == 1 and right.islower() and len(left) >= 4 and left[-1].isalpha():
         return True
     return False
+
+
+def _should_drop_redundant_field_prefix(left: str, right: str) -> bool:
+    if not left or not right or left == right:
+        return False
+    if " " in left or " " in right:
+        return False
+    if not re.fullmatch(r"[A-Za-z0-9_/-]+", left) or not re.fullmatch(r"[A-Za-z0-9_/-]+", right):
+        return False
+
+    left_normalized = left.lower()
+    right_normalized = right.lower()
+    return (
+        len(left_normalized) >= 4
+        and any(char.isupper() for char in right[1:])
+        and right_normalized.endswith(left_normalized)
+    )
 
 
 def _apply_section_specific_row_markup(section_title: str, rows: list[list[str]]) -> list[list[str]]:
@@ -2027,6 +2056,8 @@ def _compute_body_left_margin(text_blocks: list[dict], page_height: float) -> fl
 def _max_font_size(block: dict) -> float:
     sizes = [float(span.get("size", 0.0)) for line in block.get("lines", []) for span in line.get("spans", [])]
     return max(sizes, default=0.0)
+
+
 
 
 

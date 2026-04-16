@@ -1,0 +1,3016 @@
+{
+  "slice_file": "前言（1-23）.pdf",
+  "display_title": "前言",
+  "start_page": 1,
+  "end_page": 23,
+  "source_pages": [
+    {
+      "slice_page": 1,
+      "source_page": 1,
+      "is_overlap": false,
+      "markdown": "",
+      "blocks": [
+        {
+          "type": "code",
+          "text": "\"userId\": \"11231313123\",\n\"countryCode\": \"HK\",\n\"relationshipType\": \"THIRD_PARTY\",\n\"firstName\": \"7201273012730\",\n\"lastName\": \"Sg\"\n},\n{\n\"entityType\": \"COMPANY\",\n\"type\": \"ORIGINATOR\",\n\"userId\": \"22112\",\n\"countryCode\": \"NG\",\n\"relationshipType\": \"SELF_OWNED\",\n\"legalName\": \"123\",\n\"registrationNumber\": \"23131231\"\n}\n]\n}\n]\n}",
+          "source_page": 1,
+          "bbox": [
+            104.64,
+            78.689,
+            363.961,
+            523.912
+          ],
+          "reading_order": 1,
+          "is_overlap": false,
+          "dedupe_key": "1:984e30d15c69:6aef872ea2",
+          "heading_level": null
+        },
+        {
+          "type": "paragraph",
+          "text": "}",
+          "source_page": 1,
+          "bbox": [
+            90.0,
+            535.17,
+            93.68,
+            548.033
+          ],
+          "reading_order": 20,
+          "is_overlap": false,
+          "dedupe_key": "1:c2b7df6201fd:f03ccda899",
+          "heading_level": null
+        },
+        {
+          "type": "heading",
+          "text": "8.8 Payout Order API",
+          "source_page": 1,
+          "bbox": [
+            90.0,
+            620.421,
+            249.125,
+            642.527
+          ],
+          "reading_order": 21,
+          "is_overlap": false,
+          "dedupe_key": "1:909e683c5a9d:90160537b7",
+          "heading_level": 2
+        },
+        {
+          "type": "heading",
+          "text": "8.8.1 Create Payout Order",
+          "source_page": 1,
+          "bbox": [
+            90.0,
+            657.5,
+            273.403,
+            678.29
+          ],
+          "reading_order": 22,
+          "is_overlap": false,
+          "dedupe_key": "1:aa3a7a59ffd7:2afce1515a",
+          "heading_level": 3
+        },
+        {
+          "type": "paragraph",
+          "text": "Endpoint:",
+          "source_page": 1,
+          "bbox": [
+            90.0,
+            684.408,
+            141.328,
+            699.724
+          ],
+          "reading_order": 23,
+          "is_overlap": false,
+          "dedupe_key": "1:956071b463f9:d26466d794",
+          "heading_level": null
+        },
+        {
+          "type": "paragraph",
+          "text": "Request Parameters:",
+          "source_page": 1,
+          "bbox": [
+            90.0,
+            735.648,
+            200.046,
+            750.964
+          ],
+          "reading_order": 25,
+          "is_overlap": false,
+          "dedupe_key": "1:91db7b2f6a33:5637763855",
+          "heading_level": null
+        }
+      ],
+      "tables": [
+        {
+          "type": "table",
+          "source_page": 1,
+          "bbox": [
+            90.0,
+            706.45,
+            323.0,
+            726.45
+          ],
+          "table_strategy_used": "lines",
+          "table_fallback_used": true,
+          "table_retry_pages": [
+            1
+          ],
+          "headers": [],
+          "rows": [
+            [
+              "POST",
+              "",
+              "/payfi/v1/merchant-api/create-payout"
+            ]
+          ],
+          "markdown": "|POST|Col2|/payfi/v1/merchant-api/create-payout|\n|---|---|---|",
+          "rendered_markdown": null,
+          "fallback_html": null,
+          "fallback_image": null,
+          "table_id": "p0001-t01",
+          "parent_table_id": null,
+          "table_role": "standalone",
+          "section_title": null,
+          "child_table_ids": [],
+          "table_kind": "simple",
+          "render_strategy": "gfm_table",
+          "data_attributes": {
+            "data-table-id": "p0001-t01",
+            "data-table-role": "standalone"
+          }
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 1,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0001_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 2,
+      "source_page": 2,
+      "is_overlap": false,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [],
+      "tables": [
+        {
+          "type": "table",
+          "source_page": 2,
+          "bbox": [
+            83.94,
+            72.06,
+            498.81,
+            765.07
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "requestId",
+              "Y",
+              "string",
+              "ExternalId of the order, needs unique"
+            ],
+            [
+              "accountId",
+              "Y",
+              "string",
+              "Account Id of the merchant where the order will be created at"
+            ],
+            [
+              "purpose",
+              "Y",
+              "enum",
+              "1 REFUND\n2 GOODS_SERVICES\n3 COMMISSION\n4 ROYALTY_DIVIDENDS\n5 LOAN_REPAY\n6 TREASURY\n7 RENT\n8 OTHERS 9REJECT_RETURN"
+            ],
+            [
+              "payCurrency",
+              "Y",
+              "enum",
+              "Currency of the funding used for the payoutSupported: USDT,USDC The crypto-crypto payout scenario only supports trading pairs of the same currency"
+            ],
+            [
+              "settleCurrency",
+              "Y",
+              "enum",
+              "Intended receipt currency\nCurrently\n<b>Supported:</b> USDT, USDC,USD The crypto-crypto payout scenario only supports trading pairs of the same currency"
+            ],
+            [
+              "payAmount",
+              "C",
+              "decimal string",
+              "Amount the merchant tends to pay. Implied responsibility: Recipient bears network fee, paymode of order will be RECIPIENT_BEAR\nNote: Mutually exclusive with receiveAmount. Crypto coin: 3dpWhen the purpose is REJECT_RETURN, the precision will be consistent with the orig payment"
+            ],
+            [
+              "receiveAmount",
+              "C",
+              "decimal string",
+              "Amount the beneficiary is expected to receive. Implied responsibility: Payer bears network fee, paymode of order will be PAYER_BEAR Mutually exclusive with payAmount . Crypto coin: 3dpFiat coin: USD:2dp When the purpose is REJECT_RETURN, the precision will be consistent with the orig payment"
+            ],
+            [
+              "timeUnit",
+              "C",
+              "string",
+              "time units，mandatory if payCurrency is different from settleCurrency (e.g.,M、S )"
+            ],
+            [
+              "lockTime",
+              "C",
+              "string",
+              "Represented in minutes/seconds. mandatory if payCurrency is different from settleCurrency If timeUnit=S, lockTime\nlimit 1~60 If timeUnit=M,lockTime\nlimit 1~120"
+            ],
+            [
+              "memo",
+              "N",
+              "string",
+              "Optional reference or description of the order， character limit: 512"
+            ],
+            [
+              "partyDetails",
+              "C",
+              "Array of objects",
+              "The participant details arrays of the order, provide at least one originator AND one beneficiary. If it is not provided during payout creation, you need to provide it when payout is confirmed."
+            ],
+            [
+              "cryptoAddressInfo",
+              "C",
+              "Array of objects",
+              "Mandatory if settleCurrency = Crypto This must be provided during payout confirm if it has\nnot been provided during payout creation"
+            ],
+            [
+              "fiatAccountInfo",
+              "C",
+              "object",
+              "Mandatory if settleCurrency = Fiat This must be provided during payout confirm if it has not been provided during payout creation"
+            ],
+            [
+              "origPaymentId",
+              "C",
+              "string",
+              "Mandatory if return rejected payment"
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "Table metadata: `data-table-id=p0002-t01` `data-table-role=parent` `data-child-table-ids=p0002-t01-c01,p0002-t01-c02,p0002-t01-c03,p0002-t01-c04,p0002-t01-c05,p0002-t01-c06`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| requestId | Y | string | ExternalId of the order, needs unique |\n| accountId | Y | string | Account Id of the merchant where the order will be created at |\n| purpose | Y | enum | 1 REFUND 2 GOODS_SERVICES 3 COMMISSION 4 ROYALTY_DIVIDENDS 5 LOAN_REPAY 6 TREASURY 7 RENT 8 OTHERS 9REJECT_RETURN |\n| payCurrency | Y | enum | Currency of the funding used for the payoutSupported: USDT,USDC The crypto-crypto payout scenario only supports trading pairs of the same currency |\n| settleCurrency | Y | enum | Intended receipt currency Currently<b>Supported:</b> USDT, USDC,USD The crypto-crypto payout scenario only supports trading pairs of the same currency |\n| payAmount | C | decimal string | Amount the merchant tends to pay. Implied responsibility: Recipient bears network fee, paymode of order will be RECIPIENT_BEAR<br/>Note: Mutually exclusive with receiveAmount. Crypto coin: 3dpWhen the purpose is REJECT_RETURN, the precision will be consistent with the orig payment |\n| receiveAmount | C | decimal string | Amount the beneficiary is expected to receive. Implied responsibility: Payer bears network fee, paymode of order will be PAYER_BEAR Mutually exclusive with payAmount . Crypto coin: 3dpFiat coin: USD:2dp When the purpose is REJECT_RETURN, the precision will be consistent with the orig payment |\n| timeUnit | C | string | time units，mandatory if payCurrency is different from settleCurrency (e.g.,M、S ) |\n| lockTime | C | string | Represented in minutes/seconds. mandatory if payCurrency is different from settleCurrency If timeUnit=S, lockTime<br/>limit 1~60 If timeUnit=M,lockTime<br/>limit 1~120 |\n| memo | N | string | Optional reference or description of the order， character limit: 512 |\n| partyDetails | C | Array of objects | The participant details arrays of the order, provide at least one originator AND one beneficiary. If it is not provided during payout creation, you need to provide it when payout is confirmed. |\n| cryptoAddressInfo | C | Array of objects | Mandatory if settleCurrency = Crypto This must be provided during payout confirm if it has not been provided during payout creation |\n| fiatAccountInfo | C | object | Mandatory if settleCurrency = Fiat This must be provided during payout confirm if it has not been provided during payout creation |\n| origPaymentId | C | string | Mandatory if return rejected payment |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0002-t01\" data-table-role=\"parent\" data-child-table-ids=\"p0002-t01-c01,p0002-t01-c02,p0002-t01-c03,p0002-t01-c04,p0002-t01-c05,p0002-t01-c06\">\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>requestId</td><td>Y</td><td>string</td><td>ExternalId of the order, needs unique</td></tr>\n      <tr><td>accountId</td><td>Y</td><td>string</td><td>Account Id of the merchant where the order will be created at</td></tr>\n      <tr><td>purpose</td><td>Y</td><td>enum</td><td>1 REFUND 2 GOODS_SERVICES 3 COMMISSION 4 ROYALTY_DIVIDENDS 5 LOAN_REPAY 6 TREASURY 7 RENT 8 OTHERS 9REJECT_RETURN</td></tr>\n      <tr><td>payCurrency</td><td>Y</td><td>enum</td><td>Currency of the funding used for the payoutSupported: USDT,USDC The crypto-crypto payout scenario only supports trading pairs of the same currency</td></tr>\n      <tr><td>settleCurrency</td><td>Y</td><td>enum</td><td>Intended receipt currency Currently<b>Supported:</b> USDT, USDC,USD The crypto-crypto payout scenario only supports trading pairs of the same currency</td></tr>\n      <tr><td>payAmount</td><td>C</td><td>decimal string</td><td>Amount the merchant tends to pay. Implied responsibility: Recipient bears network fee, paymode of order will be RECIPIENT_BEAR<br/>Note: Mutually exclusive with receiveAmount. Crypto coin: 3dpWhen the purpose is REJECT_RETURN, the precision will be consistent with the orig payment</td></tr>\n      <tr><td>receiveAmount</td><td>C</td><td>decimal string</td><td>Amount the beneficiary is expected to receive. Implied responsibility: Payer bears network fee, paymode of order will be PAYER_BEAR Mutually exclusive with payAmount . Crypto coin: 3dpFiat coin: USD:2dp When the purpose is REJECT_RETURN, the precision will be consistent with the orig payment</td></tr>\n      <tr><td>timeUnit</td><td>C</td><td>string</td><td>time units，mandatory if payCurrency is different from settleCurrency (e.g.,M、S )</td></tr>\n      <tr><td>lockTime</td><td>C</td><td>string</td><td>Represented in minutes/seconds. mandatory if payCurrency is different from settleCurrency If timeUnit=S, lockTime<br/>limit 1~60 If timeUnit=M,lockTime<br/>limit 1~120</td></tr>\n      <tr><td>memo</td><td>N</td><td>string</td><td>Optional reference or description of the order， character limit: 512</td></tr>\n      <tr><td>partyDetails</td><td>C</td><td>Array of objects</td><td>The participant details arrays of the order, provide at least one originator AND one beneficiary. If it is not provided during payout creation, you need to provide it when payout is confirmed.</td></tr>\n      <tr><td>cryptoAddressInfo</td><td>C</td><td>Array of objects</td><td>Mandatory if settleCurrency = Crypto This must be provided during payout confirm if it has not been provided during payout creation</td></tr>\n      <tr><td>fiatAccountInfo</td><td>C</td><td>object</td><td>Mandatory if settleCurrency = Fiat This must be provided during payout confirm if it has not been provided during payout creation</td></tr>\n      <tr><td>origPaymentId</td><td>C</td><td>string</td><td>Mandatory if return rejected payment</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0002-t01",
+          "parent_table_id": null,
+          "table_role": "parent",
+          "section_title": null,
+          "child_table_ids": [
+            "p0002-t01-c01",
+            "p0002-t01-c02",
+            "p0002-t01-c03",
+            "p0002-t01-c04",
+            "p0002-t01-c05",
+            "p0002-t01-c06"
+          ],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0002-t01",
+            "data-table-role": "parent",
+            "data-child-table-ids": "p0002-t01-c01,p0002-t01-c02,p0002-t01-c03,p0002-t01-c04,p0002-t01-c05,p0002-t01-c06"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 2,
+          "bbox": [
+            83.94,
+            72.06,
+            498.81,
+            765.07
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "address",
+              "Y",
+              "string",
+              "Destination address. NOTE: IF NOT PROVIDED, MUST PROVIDE IN CONFIRM STEP"
+            ],
+            [
+              "memo",
+              "N",
+              "string",
+              "Memo/tag/destination tag if required by chain."
+            ],
+            [
+              "network",
+              "Y",
+              "enum",
+              "TRC20, ERC20, SPL, etc."
+            ],
+            [
+              "currency supportCurrency",
+              "N",
+              "Array of strings",
+              "The list of currencies the address will support. For example USDT, USDC"
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "**Params of cryptoAddress (objects of cryptoAddressInfo)**\n\nTable metadata: `data-table-id=p0002-t01-c01` `data-table-role=child` `data-parent-table-id=p0002-t01`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| address | Y | string | Destination address. NOTE: IF NOT PROVIDED, MUST PROVIDE IN CONFIRM STEP |\n| memo | N | string | Memo/tag/destination tag if required by chain. |\n| network | Y | enum | TRC20, ERC20, SPL, etc. |\n| currency supportCurrency | N | Array of strings | The list of currencies the address will support. For example USDT, USDC |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0002-t01-c01\" data-table-role=\"child\" data-parent-table-id=\"p0002-t01\">\n  <p class=\"complex-table-title\"><strong>Params of cryptoAddress (objects of cryptoAddressInfo)</strong></p>\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>address</td><td>Y</td><td>string</td><td>Destination address. NOTE: IF NOT PROVIDED, MUST PROVIDE IN CONFIRM STEP</td></tr>\n      <tr><td>memo</td><td>N</td><td>string</td><td>Memo/tag/destination tag if required by chain.</td></tr>\n      <tr><td>network</td><td>Y</td><td>enum</td><td>TRC20, ERC20, SPL, etc.</td></tr>\n      <tr><td>currency supportCurrency</td><td>N</td><td>Array of strings</td><td>The list of currencies the address will support. For example USDT, USDC</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0002-t01-c01",
+          "parent_table_id": "p0002-t01",
+          "table_role": "child",
+          "section_title": "Params of cryptoAddress (objects of cryptoAddressInfo)",
+          "child_table_ids": [],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0002-t01-c01",
+            "data-table-role": "child",
+            "data-parent-table-id": "p0002-t01"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 2,
+          "bbox": [
+            83.94,
+            72.06,
+            498.81,
+            765.07
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "swift",
+              "N",
+              "<s>object</s>",
+              ""
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "**Params of fiatAccountInfo**\n\nTable metadata: `data-table-id=p0002-t01-c02` `data-table-role=child` `data-parent-table-id=p0002-t01`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| swift | N | <s>object</s> |  |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0002-t01-c02\" data-table-role=\"child\" data-parent-table-id=\"p0002-t01\">\n  <p class=\"complex-table-title\"><strong>Params of fiatAccountInfo</strong></p>\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>swift</td><td>N</td><td><s>object</s></td><td></td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0002-t01-c02",
+          "parent_table_id": "p0002-t01",
+          "table_role": "child",
+          "section_title": "Params of fiatAccountInfo",
+          "child_table_ids": [],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0002-t01-c02",
+            "data-table-role": "child",
+            "data-parent-table-id": "p0002-t01"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 2,
+          "bbox": [
+            83.94,
+            72.06,
+            498.81,
+            765.07
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "network",
+              "Y",
+              "enum",
+              "SWIFT"
+            ],
+            [
+              "bankAccountNumber",
+              "Y",
+              "string",
+              "Beneficiary account number Character\nlimit 255 Must include: 1. Bank Account <s>+ bic</s>Allowed：^[a-zA-Z0-9]{1,255}$"
+            ],
+            [
+              "accountHolderName",
+              "Y",
+              "string",
+              "Beneficiary account name (as registered with the bank) Character\nlimit 255Allowed:^[a-zA-Z /\\\\-?:().,'+]{1,255}$"
+            ],
+            [
+              "bic",
+              "Y",
+              "string",
+              "i.e: Bank/Swift Code\n<b>Allowed:</b> ^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$"
+            ],
+            [
+              "bankName",
+              "Y",
+              "string",
+              "Character\nlimit 255 Name of Bank\n<b>Allowed:</b> ^[a-zA-Z /\\\\-?:().,'+]{1,255}$"
+            ],
+            [
+              "currency",
+              "Y",
+              "string",
+              "e.g. USD currency of the bank account"
+            ],
+            [
+              "referenceMessage",
+              "N",
+              "string",
+              "Optional memo context for a transaction, which will be sent to the received bankCharacter limit: 100‘"
+            ],
+            [
+              "bankAddress",
+              "Y",
+              "object",
+              "Address of bank"
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "**Params of SWIFT**\n\nTable metadata: `data-table-id=p0002-t01-c03` `data-table-role=child` `data-parent-table-id=p0002-t01`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| network | Y | enum | SWIFT |\n| bankAccountNumber | Y | string | Beneficiary account number Character<br/>limit 255 Must include: 1. Bank Account <s>+ bic</s>Allowed：^[a-zA-Z0-9]{1,255}$ |\n| accountHolderName | Y | string | Beneficiary account name (as registered with the bank) Character<br/>limit 255Allowed:^[a-zA-Z /\\\\-?:().,'+]{1,255}$ |\n| bic | Y | string | i.e: Bank/Swift Code<b>Allowed:</b> ^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$ |\n| bankName | Y | string | Character<br/>limit 255 Name of Bank<b>Allowed:</b> ^[a-zA-Z /\\\\-?:().,'+]{1,255}$ |\n| currency | Y | string | e.g. USD currency of the bank account |\n| referenceMessage | N | string | Optional memo context for a transaction, which will be sent to the received bankCharacter limit: 100‘ |\n| bankAddress | Y | object | Address of bank |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0002-t01-c03\" data-table-role=\"child\" data-parent-table-id=\"p0002-t01\">\n  <p class=\"complex-table-title\"><strong>Params of SWIFT</strong></p>\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>network</td><td>Y</td><td>enum</td><td>SWIFT</td></tr>\n      <tr><td>bankAccountNumber</td><td>Y</td><td>string</td><td>Beneficiary account number Character<br/>limit 255 Must include: 1. Bank Account <s>+ bic</s>Allowed：^[a-zA-Z0-9]{1,255}$</td></tr>\n      <tr><td>accountHolderName</td><td>Y</td><td>string</td><td>Beneficiary account name (as registered with the bank) Character<br/>limit 255Allowed:^[a-zA-Z /\\\\-?:().,'+]{1,255}$</td></tr>\n      <tr><td>bic</td><td>Y</td><td>string</td><td>i.e: Bank/Swift Code<b>Allowed:</b> ^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$</td></tr>\n      <tr><td>bankName</td><td>Y</td><td>string</td><td>Character<br/>limit 255 Name of Bank<b>Allowed:</b> ^[a-zA-Z /\\\\-?:().,'+]{1,255}$</td></tr>\n      <tr><td>currency</td><td>Y</td><td>string</td><td>e.g. USD currency of the bank account</td></tr>\n      <tr><td>referenceMessage</td><td>N</td><td>string</td><td>Optional memo context for a transaction, which will be sent to the received bankCharacter limit: 100‘</td></tr>\n      <tr><td>bankAddress</td><td>Y</td><td>object</td><td>Address of bank</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0002-t01-c03",
+          "parent_table_id": "p0002-t01",
+          "table_role": "child",
+          "section_title": "Params of SWIFT",
+          "child_table_ids": [],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0002-t01-c03",
+            "data-table-role": "child",
+            "data-parent-table-id": "p0002-t01"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 2,
+          "bbox": [
+            83.94,
+            72.06,
+            498.81,
+            765.07
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "bankCity",
+              "Y",
+              "string",
+              "City of Bank\nCharacter limit: 255"
+            ],
+            [
+              "bankCountry",
+              "Y",
+              "string",
+              "Country of bankISO Alpha-2 country code (e.g. SG)"
+            ],
+            [
+              "address",
+              "N",
+              "string",
+              "Detail address of Bank\nCharacter limit: 255"
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "**bankAddress Description (Parameters of bankAddress)**\n\nTable metadata: `data-table-id=p0002-t01-c04` `data-table-role=child` `data-parent-table-id=p0002-t01`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| bankCity | Y | string | City of Bank<br/>Character limit: 255 |\n| bankCountry | Y | string | Country of bankISO Alpha-2 country code (e.g. SG) |\n| address | N | string | Detail address of Bank<br/>Character limit: 255 |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0002-t01-c04\" data-table-role=\"child\" data-parent-table-id=\"p0002-t01\">\n  <p class=\"complex-table-title\"><strong>bankAddress Description (Parameters of bankAddress)</strong></p>\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>bankCity</td><td>Y</td><td>string</td><td>City of Bank<br/>Character limit: 255</td></tr>\n      <tr><td>bankCountry</td><td>Y</td><td>string</td><td>Country of bankISO Alpha-2 country code (e.g. SG)</td></tr>\n      <tr><td>address</td><td>N</td><td>string</td><td>Detail address of Bank<br/>Character limit: 255</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0002-t01-c04",
+          "parent_table_id": "p0002-t01",
+          "table_role": "child",
+          "section_title": "bankAddress Description (Parameters of bankAddress)",
+          "child_table_ids": [],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0002-t01-c04",
+            "data-table-role": "child",
+            "data-parent-table-id": "p0002-t01"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 2,
+          "bbox": [
+            83.94,
+            72.06,
+            498.81,
+            765.07
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "type",
+              "Y",
+              "string",
+              "Identifies whether the party detail information belongs to a BENEFICIARY or an ORIGINATOR. Possible values - BENEFICIARY, ORIGINATOR Must include at leastOne originator AND one beneficiary"
+            ],
+            [
+              "entityType",
+              "Y",
+              "string",
+              "Identifies whether the party detail information belongs to an INDIVIDUAL or a COMPANY\nPossible values - INDIVIDUAL, COMPANY"
+            ],
+            [
+              "userId",
+              "N",
+              "string",
+              "The uuid tied to this beneficiary or originator."
+            ],
+            [
+              "firstName",
+              "Y",
+              "string",
+              "First name of the individual (required for INDIVIDUAL entity type) Character limit: 255 Allowed: • Alphanumeric characters • Chinese characters"
+            ],
+            [
+              "lastName",
+              "Y",
+              "string",
+              "Last name of the individual (required for INDIVIDUAL entity type) Character limit: 255 Allowed: • Alphanumeric characters • Chinese characters"
+            ],
+            [
+              "dateOfBirth",
+              "N",
+              "string",
+              "Date of birth of the individual yyyy-MM-dd"
+            ],
+            [
+              "relationshipType",
+              "Y",
+              "string",
+              "Type of the relationship between the BENEFICIARY/ORIGINATOR and the creator of the payment. Possible values - SELF_OWNED, THIRD_PARTY"
+            ],
+            [
+              "countryCode",
+              "Y",
+              "string",
+              "The\nISO 3166-1-alpha-2 code of the country that the party resides in. Unsupported country code: BY,IR,MM,KP,UA,US,SY,RU,CN,SG"
+            ],
+            [
+              "address",
+              "N",
+              "string",
+              "Address of the originator/beneficiary of this account. Please ensure the address is validAllowed: • 255 max characters • Alphanumeric characters • Chinese characters • Unicode letters • Digits (0-9) • Spaces • Basic punctuation: . , ' - / # ( ) （ ） [ ]"
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "**Individual Party Details (objects of partyDetails)**\n\nTable metadata: `data-table-id=p0002-t01-c05` `data-table-role=child` `data-parent-table-id=p0002-t01`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| type | Y | string | Identifies whether the party detail information belongs to a BENEFICIARY or an ORIGINATOR. Possible values - BENEFICIARY, ORIGINATOR Must include at leastOne originator AND one beneficiary |\n| entityType | Y | string | Identifies whether the party detail information belongs to an INDIVIDUAL or a COMPANY<br/>Possible values - INDIVIDUAL, COMPANY |\n| userId | N | string | The uuid tied to this beneficiary or originator. |\n| firstName | Y | string | First name of the individual (required for INDIVIDUAL entity type) Character limit: 255 Allowed: • Alphanumeric characters • Chinese characters |\n| lastName | Y | string | Last name of the individual (required for INDIVIDUAL entity type) Character limit: 255 Allowed: • Alphanumeric characters • Chinese characters |\n| dateOfBirth | N | string | Date of birth of the individual yyyy-MM-dd |\n| relationshipType | Y | string | Type of the relationship between the BENEFICIARY/ORIGINATOR and the creator of the payment. Possible values - SELF_OWNED, THIRD_PARTY |\n| countryCode | Y | string | The<br/>ISO 3166-1-alpha-2 code of the country that the party resides in. Unsupported country code: BY,IR,MM,KP,UA,US,SY,RU,CN,SG |\n| address | N | string | Address of the originator/beneficiary of this account. Please ensure the address is validAllowed: • 255 max characters • Alphanumeric characters • Chinese characters • Unicode letters • Digits (0-9) • Spaces • Basic punctuation: . , ' - / # ( ) （ ） [ ] |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0002-t01-c05\" data-table-role=\"child\" data-parent-table-id=\"p0002-t01\">\n  <p class=\"complex-table-title\"><strong>Individual Party Details (objects of partyDetails)</strong></p>\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>type</td><td>Y</td><td>string</td><td>Identifies whether the party detail information belongs to a BENEFICIARY or an ORIGINATOR. Possible values - BENEFICIARY, ORIGINATOR Must include at leastOne originator AND one beneficiary</td></tr>\n      <tr><td>entityType</td><td>Y</td><td>string</td><td>Identifies whether the party detail information belongs to an INDIVIDUAL or a COMPANY<br/>Possible values - INDIVIDUAL, COMPANY</td></tr>\n      <tr><td>userId</td><td>N</td><td>string</td><td>The uuid tied to this beneficiary or originator.</td></tr>\n      <tr><td>firstName</td><td>Y</td><td>string</td><td>First name of the individual (required for INDIVIDUAL entity type) Character limit: 255 Allowed: • Alphanumeric characters • Chinese characters</td></tr>\n      <tr><td>lastName</td><td>Y</td><td>string</td><td>Last name of the individual (required for INDIVIDUAL entity type) Character limit: 255 Allowed: • Alphanumeric characters • Chinese characters</td></tr>\n      <tr><td>dateOfBirth</td><td>N</td><td>string</td><td>Date of birth of the individual yyyy-MM-dd</td></tr>\n      <tr><td>relationshipType</td><td>Y</td><td>string</td><td>Type of the relationship between the BENEFICIARY/ORIGINATOR and the creator of the payment. Possible values - SELF_OWNED, THIRD_PARTY</td></tr>\n      <tr><td>countryCode</td><td>Y</td><td>string</td><td>The<br/>ISO 3166-1-alpha-2 code of the country that the party resides in. Unsupported country code: BY,IR,MM,KP,UA,US,SY,RU,CN,SG</td></tr>\n      <tr><td>address</td><td>N</td><td>string</td><td>Address of the originator/beneficiary of this account. Please ensure the address is validAllowed: • 255 max characters • Alphanumeric characters • Chinese characters • Unicode letters • Digits (0-9) • Spaces • Basic punctuation: . , ' - / # ( ) （ ） [ ]</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0002-t01-c05",
+          "parent_table_id": "p0002-t01",
+          "table_role": "child",
+          "section_title": "Individual Party Details (objects of partyDetails)",
+          "child_table_ids": [],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0002-t01-c05",
+            "data-table-role": "child",
+            "data-parent-table-id": "p0002-t01"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 2,
+          "bbox": [
+            83.94,
+            72.06,
+            498.81,
+            765.07
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "type",
+              "Y",
+              "string",
+              "Identifies whether the party detail information belongs to a BENEFICIARY or an ORIGINATOR. Possible values - BENEFICIARY, ORIGINATOR Provide at least one originator AND one beneficiary"
+            ],
+            [
+              "entityType",
+              "Y",
+              "string",
+              "Identifies whether the party detail information belongs to an INDIVIDUAL or a COMPANY\nPossible values - INDIVIDUAL, COMPANY"
+            ],
+            [
+              "userId",
+              "N",
+              "string",
+              "The uuid tied to this beneficiary or originator."
+            ],
+            [
+              "legalName",
+              "Y",
+              "string",
+              "Name of the company (required for COMPANY entity type) Character limit: 255 Allowed: • Alphanumeric characters • Chinese characters"
+            ],
+            [
+              "relationshipType",
+              "Y",
+              "string",
+              "Type of the relationship between the BENEFICIARY/ORIGINATOR and the creator of the payment. Possible values - SELF_OWNED, THIRD_PARTY"
+            ],
+            [
+              "countryCode",
+              "Y",
+              "string",
+              "The\nISO 3166-1-alpha-2 code of the country that the party resides in. Required only if requesterIpAddress is not provided. Unsupported country code: BY,IR,MM,KP,UA,US,SY,RU,CN,SG"
+            ],
+            [
+              "registrationNumber",
+              "Y",
+              "string",
+              "Legal Entity identifier 255 character limit Alphanumerical Only Special characters not supported (ie: !@#$)"
+            ],
+            [
+              "address",
+              "N",
+              "string",
+              "Address of the originator/beneficiary of this account. Please ensure the address is validAllowed: • 255 max characters • Alphanumeric characters • Chinese characters • Unicode letters • Digits (0-9) • Spaces • Basic punctuation: . , ' - / # ( ) （ ） [ ]"
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "**Company Party Details (objects of partyDetails)**\n\nTable metadata: `data-table-id=p0002-t01-c06` `data-table-role=child` `data-parent-table-id=p0002-t01`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| type | Y | string | Identifies whether the party detail information belongs to a BENEFICIARY or an ORIGINATOR. Possible values - BENEFICIARY, ORIGINATOR Provide at least one originator AND one beneficiary |\n| entityType | Y | string | Identifies whether the party detail information belongs to an INDIVIDUAL or a COMPANY<br/>Possible values - INDIVIDUAL, COMPANY |\n| userId | N | string | The uuid tied to this beneficiary or originator. |\n| legalName | Y | string | Name of the company (required for COMPANY entity type) Character limit: 255 Allowed: • Alphanumeric characters • Chinese characters |\n| relationshipType | Y | string | Type of the relationship between the BENEFICIARY/ORIGINATOR and the creator of the payment. Possible values - SELF_OWNED, THIRD_PARTY |\n| countryCode | Y | string | The<br/>ISO 3166-1-alpha-2 code of the country that the party resides in. Required only if requesterIpAddress is not provided. Unsupported country code: BY,IR,MM,KP,UA,US,SY,RU,CN,SG |\n| registrationNumber | Y | string | Legal Entity identifier 255 character limit Alphanumerical Only Special characters not supported (ie: !@#$) |\n| address | N | string | Address of the originator/beneficiary of this account. Please ensure the address is validAllowed: • 255 max characters • Alphanumeric characters • Chinese characters • Unicode letters • Digits (0-9) • Spaces • Basic punctuation: . , ' - / # ( ) （ ） [ ] |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0002-t01-c06\" data-table-role=\"child\" data-parent-table-id=\"p0002-t01\">\n  <p class=\"complex-table-title\"><strong>Company Party Details (objects of partyDetails)</strong></p>\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>type</td><td>Y</td><td>string</td><td>Identifies whether the party detail information belongs to a BENEFICIARY or an ORIGINATOR. Possible values - BENEFICIARY, ORIGINATOR Provide at least one originator AND one beneficiary</td></tr>\n      <tr><td>entityType</td><td>Y</td><td>string</td><td>Identifies whether the party detail information belongs to an INDIVIDUAL or a COMPANY<br/>Possible values - INDIVIDUAL, COMPANY</td></tr>\n      <tr><td>userId</td><td>N</td><td>string</td><td>The uuid tied to this beneficiary or originator.</td></tr>\n      <tr><td>legalName</td><td>Y</td><td>string</td><td>Name of the company (required for COMPANY entity type) Character limit: 255 Allowed: • Alphanumeric characters • Chinese characters</td></tr>\n      <tr><td>relationshipType</td><td>Y</td><td>string</td><td>Type of the relationship between the BENEFICIARY/ORIGINATOR and the creator of the payment. Possible values - SELF_OWNED, THIRD_PARTY</td></tr>\n      <tr><td>countryCode</td><td>Y</td><td>string</td><td>The<br/>ISO 3166-1-alpha-2 code of the country that the party resides in. Required only if requesterIpAddress is not provided. Unsupported country code: BY,IR,MM,KP,UA,US,SY,RU,CN,SG</td></tr>\n      <tr><td>registrationNumber</td><td>Y</td><td>string</td><td>Legal Entity identifier 255 character limit Alphanumerical Only Special characters not supported (ie: !@#$)</td></tr>\n      <tr><td>address</td><td>N</td><td>string</td><td>Address of the originator/beneficiary of this account. Please ensure the address is validAllowed: • 255 max characters • Alphanumeric characters • Chinese characters • Unicode letters • Digits (0-9) • Spaces • Basic punctuation: . , ' - / # ( ) （ ） [ ]</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0002-t01-c06",
+          "parent_table_id": "p0002-t01",
+          "table_role": "child",
+          "section_title": "Company Party Details (objects of partyDetails)",
+          "child_table_ids": [],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0002-t01-c06",
+            "data-table-role": "child",
+            "data-parent-table-id": "p0002-t01"
+          }
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 2,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0002_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 3,
+      "source_page": 3,
+      "is_overlap": false,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [],
+      "tables": [],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 3,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0003_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 4,
+      "source_page": 4,
+      "is_overlap": false,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [],
+      "tables": [],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 4,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0004_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 5,
+      "source_page": 5,
+      "is_overlap": false,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [],
+      "tables": [],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 5,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0005_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 6,
+      "source_page": 6,
+      "is_overlap": false,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [],
+      "tables": [],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 6,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0006_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 7,
+      "source_page": 7,
+      "is_overlap": false,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [],
+      "tables": [],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 7,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0007_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 8,
+      "source_page": 8,
+      "is_overlap": false,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Response Parameters:",
+          "source_page": 8,
+          "bbox": [
+            90.0,
+            684.289,
+            209.165,
+            699.605
+          ],
+          "reading_order": 24,
+          "is_overlap": false,
+          "dedupe_key": "8:479138d30944:d85a050d53",
+          "heading_level": null
+        }
+      ],
+      "tables": [
+        {
+          "type": "table",
+          "source_page": 8,
+          "bbox": [
+            83.94,
+            706.46,
+            498.81,
+            738.32
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [],
+          "markdown": "|Field|Req|Type|Description|\n|---|---|---|---|",
+          "rendered_markdown": null,
+          "fallback_html": null,
+          "fallback_image": null,
+          "table_id": "p0008-t01",
+          "parent_table_id": null,
+          "table_role": "standalone",
+          "section_title": null,
+          "child_table_ids": [],
+          "table_kind": "simple",
+          "render_strategy": "gfm_table",
+          "data_attributes": {
+            "data-table-id": "p0008-t01",
+            "data-table-role": "standalone"
+          }
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 8,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0008_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 9,
+      "source_page": 9,
+      "is_overlap": false,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [],
+      "tables": [
+        {
+          "type": "table",
+          "source_page": 9,
+          "bbox": [
+            83.94,
+            72.06,
+            498.81,
+            743.37
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "requestId",
+              "Y",
+              "string",
+              "ExternalId of the order, needs unique."
+            ],
+            [
+              "orderId",
+              "Y",
+              "string",
+              "The unique id of the order."
+            ],
+            [
+              "accountId",
+              "Y",
+              "string",
+              "Account Id of the merchant where the order will be created at"
+            ],
+            [
+              "channelId",
+              "N",
+              "string",
+              "The id of channel used for the order"
+            ],
+            [
+              "orderType",
+              "Y",
+              "enum",
+              "Type of the order CRYPTO_TO_CRYPTO_PAYOUT: when payCurrency&settleCurrency of the payout order both cryptoCRYPTO_TO_FIAT_PAYOUT: when payCurrency is crypto &settleCurrency is fiat of the payout order"
+            ],
+            [
+              "status",
+              "Y",
+              "enum",
+              "Status of the payout order CREATED,CONFIRMED,REVIEW,REVIEWED,PROC ESSING,COMPLETED,FAILED,REVERSED,REJECT ED"
+            ],
+            [
+              "purpose",
+              "Y",
+              "enum",
+              "1 REFUND\n2 GOODS_SERVICES\n3 COMMISSION\n4 ROYALTY_DIVIDENDS\n5 LOAN_REPAY\n6 TREASURY\n7 RENT\n8 OTHERS 9REJECT_RETURN"
+            ],
+            [
+              "payCurrency",
+              "Y",
+              "enum",
+              "Currency of the funding used for the payoutSupported: USDT, USDC"
+            ],
+            [
+              "settleCurrency",
+              "Y",
+              "enum",
+              "Intended receipt currency\nCurrently\n<b>Supported:</b> USDT, USDC,USD"
+            ],
+            [
+              "payMode",
+              "Y",
+              "enum",
+              "PAYER_BEAR,RECIPIENT_BEAR Description: PAYER_BEAR: Payer bear channel fee (payAmount is provided during order creation) RECIPIENT_BEAR: Recipient bear channel fee (settleAmount is provided during order creation) When orderType is CRYPTO_TO_FIAT_PAYOUT， payMode is RECIPIENT_BEAR"
+            ],
+            [
+              "totalPayAmount",
+              "Y",
+              "decimal string",
+              "Total Amount debited from merchant. Include payAmount+real-time deduct or post paidplatformfee"
+            ],
+            [
+              "payAmount",
+              "Y",
+              "decimal string",
+              "Amount the merchant tends to pay. When payAmount is provided, payAmount is used for conversion calculation. When receiveAmount is provided, payAmount is the result of conversion calculation."
+            ],
+            [
+              "settleAmount",
+              "Y",
+              "decimal string",
+              "Amount credited to beneficiary, including channel feesWhen payAmount is provided, settleAmount is the result of conversion calculation. When receiveAmount is provided, settleAmount is used for conversion calculation."
+            ],
+            [
+              "receiveAmount",
+              "Y",
+              "decimal string",
+              "Amount the beneficiary is expected to receive, excluding channel fees"
+            ],
+            [
+              "partyDetails",
+              "Y",
+              "Array of objects",
+              "See per-method fields below."
+            ],
+            [
+              "<s>cryptoMethod</s><br/>cryptoAddressInfo",
+              "C",
+              "Array of objects",
+              "Mandatory if settleCurrency = Crypto"
+            ],
+            [
+              "<s>fiatMethod</s><br/>fiatAccountInfo",
+              "C",
+              "object",
+              "Mandatory if settleCurrency = Fiat"
+            ],
+            [
+              "createTime",
+              "Y",
+              "string",
+              "The time of create order"
+            ],
+            [
+              "expireTime",
+              "Y",
+              "string",
+              "The times when this locked quote expires. You must create the transfer before this time."
+            ],
+            [
+              "updateTime",
+              "Y",
+              "string",
+              "The time when the record was last updated."
+            ],
+            [
+              "completeTime",
+              "C",
+              "string",
+              "The time when the order is complete"
+            ],
+            [
+              "quoteDetails",
+              "C",
+              "object",
+              "Conversion details of the payment, not provided if no conversion involved"
+            ],
+            [
+              "<s>feeDetails</s>",
+              "<s>Y</s>",
+              "<s>object</s>",
+              "<s>Fee details of the payment</s>"
+            ],
+            [
+              "fees",
+              "Y",
+              "Array of objects",
+              "Fee details of the order. If there is no charge, return an empty array"
+            ],
+            [
+              "<s>channelFee</s>",
+              "<s>Y</s>",
+              "<s>object</s>",
+              "<s>Channel Fee details of the payment, depending on paymode, this fee is deducted either from payer or recipient</s>"
+            ],
+            [
+              "paymentList",
+              "C",
+              "Array of objects",
+              "Payment details of the order"
+            ],
+            [
+              "memo",
+              "N",
+              "string",
+              "Optional reference or description"
+            ],
+            [
+              "origPaymentId",
+              "C",
+              "string",
+              "Mandatory if return rejected payment"
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "Table metadata: `data-table-id=p0009-t01` `data-table-role=parent` `data-child-table-ids=p0009-t01-c01,p0009-t01-c02,p0009-t01-c03,p0009-t01-c04,p0009-t01-c05,p0009-t01-c06,p0009-t01-c07,p0009-t01-c08`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| requestId | Y | string | ExternalId of the order, needs unique. |\n| orderId | Y | string | The unique id of the order. |\n| accountId | Y | string | Account Id of the merchant where the order will be created at |\n| channelId | N | string | The id of channel used for the order |\n| orderType | Y | enum | Type of the order CRYPTO_TO_CRYPTO_PAYOUT: when payCurrency&settleCurrency of the payout order both cryptoCRYPTO_TO_FIAT_PAYOUT: when payCurrency is crypto &settleCurrency is fiat of the payout order |\n| status | Y | enum | Status of the payout order CREATED,CONFIRMED,REVIEW,REVIEWED,PROC ESSING,COMPLETED,FAILED,REVERSED,REJECT ED |\n| purpose | Y | enum | 1 REFUND 2 GOODS_SERVICES 3 COMMISSION 4 ROYALTY_DIVIDENDS 5 LOAN_REPAY 6 TREASURY 7 RENT 8 OTHERS 9REJECT_RETURN |\n| payCurrency | Y | enum | Currency of the funding used for the payoutSupported: USDT, USDC |\n| settleCurrency | Y | enum | Intended receipt currency Currently<b>Supported:</b> USDT, USDC,USD |\n| payMode | Y | enum | PAYER_BEAR,RECIPIENT_BEAR Description: PAYER_BEAR: Payer bear channel fee (payAmount is provided during order creation) RECIPIENT_BEAR: Recipient bear channel fee (settleAmount is provided during order creation) When orderType is CRYPTO_TO_FIAT_PAYOUT， payMode is RECIPIENT_BEAR |\n| totalPayAmount | Y | decimal string | Total Amount debited from merchant. Include payAmount+real-time deduct or post paidplatformfee |\n| payAmount | Y | decimal string | Amount the merchant tends to pay. When payAmount is provided, payAmount is used for conversion calculation. When receiveAmount is provided, payAmount is the result of conversion calculation. |\n| settleAmount | Y | decimal string | Amount credited to beneficiary, including channel feesWhen payAmount is provided, settleAmount is the result of conversion calculation. When receiveAmount is provided, settleAmount is used for conversion calculation. |\n| receiveAmount | Y | decimal string | Amount the beneficiary is expected to receive, excluding channel fees |\n| partyDetails | Y | Array of objects | See per-method fields below. |\n| <s>cryptoMethod</s><br/>cryptoAddressInfo | C | Array of objects | Mandatory if settleCurrency = Crypto |\n| <s>fiatMethod</s><br/>fiatAccountInfo | C | object | Mandatory if settleCurrency = Fiat |\n| createTime | Y | string | The time of create order |\n| expireTime | Y | string | The times when this locked quote expires. You must create the transfer before this time. |\n| updateTime | Y | string | The time when the record was last updated. |\n| completeTime | C | string | The time when the order is complete |\n| quoteDetails | C | object | Conversion details of the payment, not provided if no conversion involved |\n| <s>feeDetails</s> | <s>Y</s> | <s>object</s> | <s>Fee details of the payment</s> |\n| fees | Y | Array of objects | Fee details of the order. If there is no charge, return an empty array |\n| <s>channelFee</s> | <s>Y</s> | <s>object</s> | <s>Channel Fee details of the payment, depending on paymode, this fee is deducted either from payer or recipient</s> |\n| paymentList | C | Array of objects | Payment details of the order |\n| memo | N | string | Optional reference or description |\n| origPaymentId | C | string | Mandatory if return rejected payment |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0009-t01\" data-table-role=\"parent\" data-child-table-ids=\"p0009-t01-c01,p0009-t01-c02,p0009-t01-c03,p0009-t01-c04,p0009-t01-c05,p0009-t01-c06,p0009-t01-c07,p0009-t01-c08\">\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>requestId</td><td>Y</td><td>string</td><td>ExternalId of the order, needs unique.</td></tr>\n      <tr><td>orderId</td><td>Y</td><td>string</td><td>The unique id of the order.</td></tr>\n      <tr><td>accountId</td><td>Y</td><td>string</td><td>Account Id of the merchant where the order will be created at</td></tr>\n      <tr><td>channelId</td><td>N</td><td>string</td><td>The id of channel used for the order</td></tr>\n      <tr><td>orderType</td><td>Y</td><td>enum</td><td>Type of the order CRYPTO_TO_CRYPTO_PAYOUT: when payCurrency&amp;settleCurrency of the payout order both cryptoCRYPTO_TO_FIAT_PAYOUT: when payCurrency is crypto &amp;settleCurrency is fiat of the payout order</td></tr>\n      <tr><td>status</td><td>Y</td><td>enum</td><td>Status of the payout order CREATED,CONFIRMED,REVIEW,REVIEWED,PROC ESSING,COMPLETED,FAILED,REVERSED,REJECT ED</td></tr>\n      <tr><td>purpose</td><td>Y</td><td>enum</td><td>1 REFUND 2 GOODS_SERVICES 3 COMMISSION 4 ROYALTY_DIVIDENDS 5 LOAN_REPAY 6 TREASURY 7 RENT 8 OTHERS 9REJECT_RETURN</td></tr>\n      <tr><td>payCurrency</td><td>Y</td><td>enum</td><td>Currency of the funding used for the payoutSupported: USDT, USDC</td></tr>\n      <tr><td>settleCurrency</td><td>Y</td><td>enum</td><td>Intended receipt currency Currently<b>Supported:</b> USDT, USDC,USD</td></tr>\n      <tr><td>payMode</td><td>Y</td><td>enum</td><td>PAYER_BEAR,RECIPIENT_BEAR Description: PAYER_BEAR: Payer bear channel fee (payAmount is provided during order creation) RECIPIENT_BEAR: Recipient bear channel fee (settleAmount is provided during order creation) When orderType is CRYPTO_TO_FIAT_PAYOUT， payMode is RECIPIENT_BEAR</td></tr>\n      <tr><td>totalPayAmount</td><td>Y</td><td>decimal string</td><td>Total Amount debited from merchant. Include payAmount+real-time deduct or post paidplatformfee</td></tr>\n      <tr><td>payAmount</td><td>Y</td><td>decimal string</td><td>Amount the merchant tends to pay. When payAmount is provided, payAmount is used for conversion calculation. When receiveAmount is provided, payAmount is the result of conversion calculation.</td></tr>\n      <tr><td>settleAmount</td><td>Y</td><td>decimal string</td><td>Amount credited to beneficiary, including channel feesWhen payAmount is provided, settleAmount is the result of conversion calculation. When receiveAmount is provided, settleAmount is used for conversion calculation.</td></tr>\n      <tr><td>receiveAmount</td><td>Y</td><td>decimal string</td><td>Amount the beneficiary is expected to receive, excluding channel fees</td></tr>\n      <tr><td>partyDetails</td><td>Y</td><td>Array of objects</td><td>See per-method fields below.</td></tr>\n      <tr><td><s>cryptoMethod</s><br/>cryptoAddressInfo</td><td>C</td><td>Array of objects</td><td>Mandatory if settleCurrency = Crypto</td></tr>\n      <tr><td><s>fiatMethod</s><br/>fiatAccountInfo</td><td>C</td><td>object</td><td>Mandatory if settleCurrency = Fiat</td></tr>\n      <tr><td>createTime</td><td>Y</td><td>string</td><td>The time of create order</td></tr>\n      <tr><td>expireTime</td><td>Y</td><td>string</td><td>The times when this locked quote expires. You must create the transfer before this time.</td></tr>\n      <tr><td>updateTime</td><td>Y</td><td>string</td><td>The time when the record was last updated.</td></tr>\n      <tr><td>completeTime</td><td>C</td><td>string</td><td>The time when the order is complete</td></tr>\n      <tr><td>quoteDetails</td><td>C</td><td>object</td><td>Conversion details of the payment, not provided if no conversion involved</td></tr>\n      <tr><td><s>feeDetails</s></td><td><s>Y</s></td><td><s>object</s></td><td><s>Fee details of the payment</s></td></tr>\n      <tr><td>fees</td><td>Y</td><td>Array of objects</td><td>Fee details of the order. If there is no charge, return an empty array</td></tr>\n      <tr><td><s>channelFee</s></td><td><s>Y</s></td><td><s>object</s></td><td><s>Channel Fee details of the payment, depending on paymode, this fee is deducted either from payer or recipient</s></td></tr>\n      <tr><td>paymentList</td><td>C</td><td>Array of objects</td><td>Payment details of the order</td></tr>\n      <tr><td>memo</td><td>N</td><td>string</td><td>Optional reference or description</td></tr>\n      <tr><td>origPaymentId</td><td>C</td><td>string</td><td>Mandatory if return rejected payment</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0009-t01",
+          "parent_table_id": null,
+          "table_role": "parent",
+          "section_title": null,
+          "child_table_ids": [
+            "p0009-t01-c01",
+            "p0009-t01-c02",
+            "p0009-t01-c03",
+            "p0009-t01-c04",
+            "p0009-t01-c05",
+            "p0009-t01-c06",
+            "p0009-t01-c07",
+            "p0009-t01-c08"
+          ],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0009-t01",
+            "data-table-role": "parent",
+            "data-child-table-ids": "p0009-t01-c01,p0009-t01-c02,p0009-t01-c03,p0009-t01-c04,p0009-t01-c05,p0009-t01-c06,p0009-t01-c07,p0009-t01-c08"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 9,
+          "bbox": [
+            83.94,
+            72.06,
+            498.81,
+            743.37
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "address",
+              "Y",
+              "string",
+              "Destination address. NOTE: IF NOT PROVIDED, MUST PROVIDE IN CONFIRM STEP"
+            ],
+            [
+              "memo",
+              "N",
+              "string",
+              "Memo/tag/destination tag if required by chain."
+            ],
+            [
+              "network",
+              "Y",
+              "enum",
+              "TRC20, ERC20, SPL, etc."
+            ],
+            [
+              "supportCurrency",
+              "Y",
+              "Array of strings",
+              "The list of currencies the address will support. For example USDT, USDC"
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "**Params of cryptoAddress (objects of cryptoAddressInfo)**\n\nTable metadata: `data-table-id=p0009-t01-c01` `data-table-role=child` `data-parent-table-id=p0009-t01`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| address | Y | string | Destination address. NOTE: IF NOT PROVIDED, MUST PROVIDE IN CONFIRM STEP |\n| memo | N | string | Memo/tag/destination tag if required by chain. |\n| network | Y | enum | TRC20, ERC20, SPL, etc. |\n| supportCurrency | Y | Array of strings | The list of currencies the address will support. For example USDT, USDC |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0009-t01-c01\" data-table-role=\"child\" data-parent-table-id=\"p0009-t01\">\n  <p class=\"complex-table-title\"><strong>Params of cryptoAddress (objects of cryptoAddressInfo)</strong></p>\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>address</td><td>Y</td><td>string</td><td>Destination address. NOTE: IF NOT PROVIDED, MUST PROVIDE IN CONFIRM STEP</td></tr>\n      <tr><td>memo</td><td>N</td><td>string</td><td>Memo/tag/destination tag if required by chain.</td></tr>\n      <tr><td>network</td><td>Y</td><td>enum</td><td>TRC20, ERC20, SPL, etc.</td></tr>\n      <tr><td>supportCurrency</td><td>Y</td><td>Array of strings</td><td>The list of currencies the address will support. For example USDT, USDC</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0009-t01-c01",
+          "parent_table_id": "p0009-t01",
+          "table_role": "child",
+          "section_title": "Params of cryptoAddress (objects of cryptoAddressInfo)",
+          "child_table_ids": [],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0009-t01-c01",
+            "data-table-role": "child",
+            "data-parent-table-id": "p0009-t01"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 9,
+          "bbox": [
+            83.94,
+            72.06,
+            498.81,
+            743.37
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "network",
+              "Y",
+              "enum",
+              "SWIFT"
+            ],
+            [
+              "bankAccountNumber",
+              "Y",
+              "string",
+              "Beneficiary account number Character\nlimit 255 Must include: 1. Bank Account <s>+ bic</s>Allowed：^[a-zA-Z0-9]{1,255}$"
+            ],
+            [
+              "accountHolderName",
+              "Y",
+              "string",
+              "Beneficiary account name (as registered with the bank) Character\nlimit 255Allowed:^[a-zA-Z /\\\\-?:().,'+]{1,255}$"
+            ],
+            [
+              "bic",
+              "Y",
+              "string",
+              "i.e: Bank/Swift Code\n<b>Allowed:</b> ^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$"
+            ],
+            [
+              "bankName",
+              "Y",
+              "string",
+              "Character\nlimit 255 Name of Bank\n<b>Allowed:</b> ^[a-zA-Z /\\\\-?:().,'+]{1,255}$"
+            ],
+            [
+              "currency",
+              "Y",
+              "string",
+              "e.g. USD currency of the bank account"
+            ],
+            [
+              "referenceMessage",
+              "N",
+              "string",
+              "Optional memo context for a transaction, which will be sent to the received bankCharacter limit: 255"
+            ],
+            [
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "bankAddress",
+              "Y",
+              "object",
+              "Address of bank"
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "**Params of fiatAccountInfo**\n\nTable metadata: `data-table-id=p0009-t01-c02` `data-table-role=child` `data-parent-table-id=p0009-t01`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| network | Y | enum | SWIFT |\n| bankAccountNumber | Y | string | Beneficiary account number Character<br/>limit 255 Must include: 1. Bank Account <s>+ bic</s>Allowed：^[a-zA-Z0-9]{1,255}$ |\n| accountHolderName | Y | string | Beneficiary account name (as registered with the bank) Character<br/>limit 255Allowed:^[a-zA-Z /\\\\-?:().,'+]{1,255}$ |\n| bic | Y | string | i.e: Bank/Swift Code<b>Allowed:</b> ^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$ |\n| bankName | Y | string | Character<br/>limit 255 Name of Bank<b>Allowed:</b> ^[a-zA-Z /\\\\-?:().,'+]{1,255}$ |\n| currency | Y | string | e.g. USD currency of the bank account |\n| referenceMessage | N | string | Optional memo context for a transaction, which will be sent to the received bankCharacter limit: 255 |\n|  |  |  |  |\n| bankAddress | Y | object | Address of bank |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0009-t01-c02\" data-table-role=\"child\" data-parent-table-id=\"p0009-t01\">\n  <p class=\"complex-table-title\"><strong>Params of fiatAccountInfo</strong></p>\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>network</td><td>Y</td><td>enum</td><td>SWIFT</td></tr>\n      <tr><td>bankAccountNumber</td><td>Y</td><td>string</td><td>Beneficiary account number Character<br/>limit 255 Must include: 1. Bank Account <s>+ bic</s>Allowed：^[a-zA-Z0-9]{1,255}$</td></tr>\n      <tr><td>accountHolderName</td><td>Y</td><td>string</td><td>Beneficiary account name (as registered with the bank) Character<br/>limit 255Allowed:^[a-zA-Z /\\\\-?:().,'+]{1,255}$</td></tr>\n      <tr><td>bic</td><td>Y</td><td>string</td><td>i.e: Bank/Swift Code<b>Allowed:</b> ^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$</td></tr>\n      <tr><td>bankName</td><td>Y</td><td>string</td><td>Character<br/>limit 255 Name of Bank<b>Allowed:</b> ^[a-zA-Z /\\\\-?:().,'+]{1,255}$</td></tr>\n      <tr><td>currency</td><td>Y</td><td>string</td><td>e.g. USD currency of the bank account</td></tr>\n      <tr><td>referenceMessage</td><td>N</td><td>string</td><td>Optional memo context for a transaction, which will be sent to the received bankCharacter limit: 255</td></tr>\n      <tr><td></td><td></td><td></td><td></td></tr>\n      <tr><td>bankAddress</td><td>Y</td><td>object</td><td>Address of bank</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0009-t01-c02",
+          "parent_table_id": "p0009-t01",
+          "table_role": "child",
+          "section_title": "Params of fiatAccountInfo",
+          "child_table_ids": [],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0009-t01-c02",
+            "data-table-role": "child",
+            "data-parent-table-id": "p0009-t01"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 9,
+          "bbox": [
+            83.94,
+            72.06,
+            498.81,
+            743.37
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "bankCity",
+              "Y",
+              "string",
+              "City of Bank\nCharacter limit: 255"
+            ],
+            [
+              "bankCountry",
+              "Y",
+              "string",
+              "Country of bankISO Alpha-2 country code (e.g. SG) SAINT_PAY: BY,IR,MM,KP,UA,US,SY,RU,CN,SG\nMSB: BY,CU,IR,MM,KP,UA,US,SY,RU,CN,SG,VE,AF"
+            ],
+            [
+              "address",
+              "N",
+              "string",
+              "Detail address of Bank\nCharacter limit: 255"
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "**bankAddress Description (Parameters of bankAddress)**\n\nTable metadata: `data-table-id=p0009-t01-c03` `data-table-role=child` `data-parent-table-id=p0009-t01`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| bankCity | Y | string | City of Bank<br/>Character limit: 255 |\n| bankCountry | Y | string | Country of bankISO Alpha-2 country code (e.g. SG) SAINT_PAY: BY,IR,MM,KP,UA,US,SY,RU,CN,SG<br/>MSB: BY,CU,IR,MM,KP,UA,US,SY,RU,CN,SG,VE,AF |\n| address | N | string | Detail address of Bank<br/>Character limit: 255 |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0009-t01-c03\" data-table-role=\"child\" data-parent-table-id=\"p0009-t01\">\n  <p class=\"complex-table-title\"><strong>bankAddress Description (Parameters of bankAddress)</strong></p>\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>bankCity</td><td>Y</td><td>string</td><td>City of Bank<br/>Character limit: 255</td></tr>\n      <tr><td>bankCountry</td><td>Y</td><td>string</td><td>Country of bankISO Alpha-2 country code (e.g. SG) SAINT_PAY: BY,IR,MM,KP,UA,US,SY,RU,CN,SG<br/>MSB: BY,CU,IR,MM,KP,UA,US,SY,RU,CN,SG,VE,AF</td></tr>\n      <tr><td>address</td><td>N</td><td>string</td><td>Detail address of Bank<br/>Character limit: 255</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0009-t01-c03",
+          "parent_table_id": "p0009-t01",
+          "table_role": "child",
+          "section_title": "bankAddress Description (Parameters of bankAddress)",
+          "child_table_ids": [],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0009-t01-c03",
+            "data-table-role": "child",
+            "data-parent-table-id": "p0009-t01"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 9,
+          "bbox": [
+            83.94,
+            72.06,
+            498.81,
+            743.37
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "quoteId",
+              "Y",
+              "string",
+              "The id of quote"
+            ],
+            [
+              "payCurrency",
+              "Y",
+              "string",
+              "The source currency code, the currency you are paying."
+            ],
+            [
+              "payAmount",
+              "Y",
+              "string",
+              "The amount of the source currency."
+            ],
+            [
+              "settleCurrency",
+              "Y",
+              "string",
+              "The target currency code . The currency you will receive."
+            ],
+            [
+              "settleAmount",
+              "Y",
+              "string",
+              "The amount of the target currency you will receive"
+            ],
+            [
+              "rate",
+              "Y",
+              "string",
+              "The locked exchange rate."
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "**Params of quoteDetails**\n\nTable metadata: `data-table-id=p0009-t01-c04` `data-table-role=child` `data-parent-table-id=p0009-t01`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| quoteId | Y | string | The id of quote |\n| payCurrency | Y | string | The source currency code, the currency you are paying. |\n| payAmount | Y | string | The amount of the source currency. |\n| settleCurrency | Y | string | The target currency code . The currency you will receive. |\n| settleAmount | Y | string | The amount of the target currency you will receive |\n| rate | Y | string | The locked exchange rate. |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0009-t01-c04\" data-table-role=\"child\" data-parent-table-id=\"p0009-t01\">\n  <p class=\"complex-table-title\"><strong>Params of quoteDetails</strong></p>\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>quoteId</td><td>Y</td><td>string</td><td>The id of quote</td></tr>\n      <tr><td>payCurrency</td><td>Y</td><td>string</td><td>The source currency code, the currency you are paying.</td></tr>\n      <tr><td>payAmount</td><td>Y</td><td>string</td><td>The amount of the source currency.</td></tr>\n      <tr><td>settleCurrency</td><td>Y</td><td>string</td><td>The target currency code . The currency you will receive.</td></tr>\n      <tr><td>settleAmount</td><td>Y</td><td>string</td><td>The amount of the target currency you will receive</td></tr>\n      <tr><td>rate</td><td>Y</td><td>string</td><td>The locked exchange rate.</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0009-t01-c04",
+          "parent_table_id": "p0009-t01",
+          "table_role": "child",
+          "section_title": "Params of quoteDetails",
+          "child_table_ids": [],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0009-t01-c04",
+            "data-table-role": "child",
+            "data-parent-table-id": "p0009-t01"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 9,
+          "bbox": [
+            83.94,
+            72.06,
+            498.81,
+            743.37
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "feePurpose",
+              "Y",
+              "string",
+              "It is an enumeration: PLAT_COIN_PAYOUT,PLAT_FIAT_PAYOUT It means the handling fee charged by the platform during a payout CHANNEL_COIN_PAYOUT,CHANNEL_FIAT_PAYO UT It means the handling fee charged by the channel during a payout"
+            ],
+            [
+              "amount",
+              "Y",
+              "string",
+              "Fee amount. USDT/C supports up to 6 decimal places; rounded up"
+            ],
+            [
+              "currency",
+              "Y",
+              "string",
+              "Currency of the fee being charged"
+            ],
+            [
+              "deductReal",
+              "Y",
+              "boolean",
+              "true: it means the fee deducted by real time false: it means the fee deducted by month"
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "**Params of fee (Objects of fees)**\n\nTable metadata: `data-table-id=p0009-t01-c05` `data-table-role=child` `data-parent-table-id=p0009-t01`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| feePurpose | Y | string | It is an enumeration: PLAT_COIN_PAYOUT,PLAT_FIAT_PAYOUT It means the handling fee charged by the platform during a payout CHANNEL_COIN_PAYOUT,CHANNEL_FIAT_PAYO UT It means the handling fee charged by the channel during a payout |\n| amount | Y | string | Fee amount. USDT/C supports up to 6 decimal places; rounded up |\n| currency | Y | string | Currency of the fee being charged |\n| deductReal | Y | boolean | true: it means the fee deducted by real time false: it means the fee deducted by month |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0009-t01-c05\" data-table-role=\"child\" data-parent-table-id=\"p0009-t01\">\n  <p class=\"complex-table-title\"><strong>Params of fee (Objects of fees)</strong></p>\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>feePurpose</td><td>Y</td><td>string</td><td>It is an enumeration: PLAT_COIN_PAYOUT,PLAT_FIAT_PAYOUT It means the handling fee charged by the platform during a payout CHANNEL_COIN_PAYOUT,CHANNEL_FIAT_PAYO UT It means the handling fee charged by the channel during a payout</td></tr>\n      <tr><td>amount</td><td>Y</td><td>string</td><td>Fee amount. USDT/C supports up to 6 decimal places; rounded up</td></tr>\n      <tr><td>currency</td><td>Y</td><td>string</td><td>Currency of the fee being charged</td></tr>\n      <tr><td>deductReal</td><td>Y</td><td>boolean</td><td>true: it means the fee deducted by real time false: it means the fee deducted by month</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0009-t01-c05",
+          "parent_table_id": "p0009-t01",
+          "table_role": "child",
+          "section_title": "Params of fee (Objects of fees)",
+          "child_table_ids": [],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0009-t01-c05",
+            "data-table-role": "child",
+            "data-parent-table-id": "p0009-t01"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 9,
+          "bbox": [
+            83.94,
+            72.06,
+            498.81,
+            743.37
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "paymentId",
+              "Y",
+              "string",
+              "The id of payment"
+            ],
+            [
+              "paymentType",
+              "Y",
+              "string",
+              "COIN_PAYOUT, FIAT_PAYOUT"
+            ],
+            [
+              "txId",
+              "N",
+              "string",
+              "The block chain transaction hashID if it is a COIN_PAYOUT"
+            ],
+            [
+              "status",
+              "Y",
+              "string",
+              "The status of payment."
+            ],
+            [
+              "payAmount",
+              "Y",
+              "string",
+              "The amount paid by the user. Note: The ERC20 protocol supports 6 decimal places for USDC/USDT."
+            ],
+            [
+              "payCurrency",
+              "N",
+              "string",
+              "The currency used by the platform for settling funds to the account (e.g., if the channel type is FIXED_NORMAL, the settlement currency is the same as the payment currency; for other channel types, it may be a different currency, such as USD)"
+            ],
+            [
+              "extraBlockChainInfo",
+              "N",
+              "object",
+              "Other blockchain-related information. It is required when the status is 'PROCESSING' or any subsequent statuses."
+            ],
+            [
+              "ExtraBlockChainInfo Description",
+              "",
+              "",
+              ""
+            ],
+            [
+              "blockNumber",
+              "N",
+              "INT",
+              "Block height. For example: 98716345"
+            ],
+            [
+              "confirmNumber",
+              "N",
+              "INT",
+              "Number of block confirmations. For example: 4"
+            ],
+            [
+              "totalConfirmNumber",
+              "N",
+              "INT",
+              "The number of blocks we consider necessary for this transaction to be permanently confirmed. For\nexample: 32"
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "**Params of payment (Object of paymentList)**\n\nTable metadata: `data-table-id=p0009-t01-c06` `data-table-role=child` `data-parent-table-id=p0009-t01`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| paymentId | Y | string | The id of payment |\n| paymentType | Y | string | COIN_PAYOUT, FIAT_PAYOUT |\n| txId | N | string | The block chain transaction hashID if it is a COIN_PAYOUT |\n| status | Y | string | The status of payment. |\n| payAmount | Y | string | The amount paid by the user. Note: The ERC20 protocol supports 6 decimal places for USDC/USDT. |\n| payCurrency | N | string | The currency used by the platform for settling funds to the account (e.g., if the channel type is FIXED_NORMAL, the settlement currency is the same as the payment currency; for other channel types, it may be a different currency, such as USD) |\n| extraBlockChainInfo | N | object | Other blockchain-related information. It is required when the status is 'PROCESSING' or any subsequent statuses. |\n| ExtraBlockChainInfo Description |  |  |  |\n| blockNumber | N | INT | Block height. For example: 98716345 |\n| confirmNumber | N | INT | Number of block confirmations. For example: 4 |\n| totalConfirmNumber | N | INT | The number of blocks we consider necessary for this transaction to be permanently confirmed. For<br/>example: 32 |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0009-t01-c06\" data-table-role=\"child\" data-parent-table-id=\"p0009-t01\">\n  <p class=\"complex-table-title\"><strong>Params of payment (Object of paymentList)</strong></p>\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>paymentId</td><td>Y</td><td>string</td><td>The id of payment</td></tr>\n      <tr><td>paymentType</td><td>Y</td><td>string</td><td>COIN_PAYOUT, FIAT_PAYOUT</td></tr>\n      <tr><td>txId</td><td>N</td><td>string</td><td>The block chain transaction hashID if it is a COIN_PAYOUT</td></tr>\n      <tr><td>status</td><td>Y</td><td>string</td><td>The status of payment.</td></tr>\n      <tr><td>payAmount</td><td>Y</td><td>string</td><td>The amount paid by the user. Note: The ERC20 protocol supports 6 decimal places for USDC/USDT.</td></tr>\n      <tr><td>payCurrency</td><td>N</td><td>string</td><td>The currency used by the platform for settling funds to the account (e.g., if the channel type is FIXED_NORMAL, the settlement currency is the same as the payment currency; for other channel types, it may be a different currency, such as USD)</td></tr>\n      <tr><td>extraBlockChainInfo</td><td>N</td><td>object</td><td>Other blockchain-related information. It is required when the status is 'PROCESSING' or any subsequent statuses.</td></tr>\n      <tr><td>ExtraBlockChainInfo Description</td><td></td><td></td><td></td></tr>\n      <tr><td>blockNumber</td><td>N</td><td>INT</td><td>Block height. For example: 98716345</td></tr>\n      <tr><td>confirmNumber</td><td>N</td><td>INT</td><td>Number of block confirmations. For example: 4</td></tr>\n      <tr><td>totalConfirmNumber</td><td>N</td><td>INT</td><td>The number of blocks we consider necessary for this transaction to be permanently confirmed. For<br/>example: 32</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0009-t01-c06",
+          "parent_table_id": "p0009-t01",
+          "table_role": "child",
+          "section_title": "Params of payment (Object of paymentList)",
+          "child_table_ids": [],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0009-t01-c06",
+            "data-table-role": "child",
+            "data-parent-table-id": "p0009-t01"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 9,
+          "bbox": [
+            83.94,
+            72.06,
+            498.81,
+            743.37
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "type",
+              "Y",
+              "string",
+              "Identifies whether the party detail information belongs to a BENEFICIARY or an ORIGINATOR. Possible values - BENEFICIARY, ORIGINATOR Must include at leastOne originator AND one beneficiary"
+            ],
+            [
+              "entityType",
+              "Y",
+              "string",
+              "Identifies whether the party detail information belongs to an INDIVIDUAL or a COMPANY\nPossible values - INDIVIDUAL, COMPANY"
+            ],
+            [
+              "userId",
+              "N",
+              "string",
+              "The uuid tied to this beneficiary or originator."
+            ],
+            [
+              "firstName",
+              "Y",
+              "string",
+              "First name of the individual (required for INDIVIDUAL entity type) 255 char limit\n<b>Allowed:</b> • Alphanumeric characters • Chinese characters"
+            ],
+            [
+              "lastName",
+              "Y",
+              "string",
+              "Last name of the individual (required for INDIVIDUAL entity type) 255 char limit\n<b>Allowed:</b> • Alphanumeric characters • Chinese characters"
+            ],
+            [
+              "dateOfBirth",
+              "N",
+              "string",
+              "Date of birth of the individual"
+            ],
+            [
+              "relationshipType",
+              "Y",
+              "string",
+              "Type of the relationship between the BENEFICIARY/ORIGINATOR and the creator of the payment. Possible values - SELF_OWNED, THIRD_PARTY"
+            ],
+            [
+              "countryCode",
+              "Y",
+              "string",
+              "The\nISO 3166-1-alpha-2 code of the country that the party resides in. Unsupported country code: SAINT_PAY: BY,IR,MM,KP,UA,US,SY,RU,CN,SG\nMSB: BY,CU,IR,MM,KP,UA,US,SY,RU,CN,SG,VE,AF"
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "**Individual Party Details (objects of partyDetails)**\n\nTable metadata: `data-table-id=p0009-t01-c07` `data-table-role=child` `data-parent-table-id=p0009-t01`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| type | Y | string | Identifies whether the party detail information belongs to a BENEFICIARY or an ORIGINATOR. Possible values - BENEFICIARY, ORIGINATOR Must include at leastOne originator AND one beneficiary |\n| entityType | Y | string | Identifies whether the party detail information belongs to an INDIVIDUAL or a COMPANY<br/>Possible values - INDIVIDUAL, COMPANY |\n| userId | N | string | The uuid tied to this beneficiary or originator. |\n| firstName | Y | string | First name of the individual (required for INDIVIDUAL entity type) 255 char limit<b>Allowed:</b> • Alphanumeric characters • Chinese characters |\n| lastName | Y | string | Last name of the individual (required for INDIVIDUAL entity type) 255 char limit<b>Allowed:</b> • Alphanumeric characters • Chinese characters |\n| dateOfBirth | N | string | Date of birth of the individual |\n| relationshipType | Y | string | Type of the relationship between the BENEFICIARY/ORIGINATOR and the creator of the payment. Possible values - SELF_OWNED, THIRD_PARTY |\n| countryCode | Y | string | The<br/>ISO 3166-1-alpha-2 code of the country that the party resides in. Unsupported country code: SAINT_PAY: BY,IR,MM,KP,UA,US,SY,RU,CN,SG<br/>MSB: BY,CU,IR,MM,KP,UA,US,SY,RU,CN,SG,VE,AF |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0009-t01-c07\" data-table-role=\"child\" data-parent-table-id=\"p0009-t01\">\n  <p class=\"complex-table-title\"><strong>Individual Party Details (objects of partyDetails)</strong></p>\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>type</td><td>Y</td><td>string</td><td>Identifies whether the party detail information belongs to a BENEFICIARY or an ORIGINATOR. Possible values - BENEFICIARY, ORIGINATOR Must include at leastOne originator AND one beneficiary</td></tr>\n      <tr><td>entityType</td><td>Y</td><td>string</td><td>Identifies whether the party detail information belongs to an INDIVIDUAL or a COMPANY<br/>Possible values - INDIVIDUAL, COMPANY</td></tr>\n      <tr><td>userId</td><td>N</td><td>string</td><td>The uuid tied to this beneficiary or originator.</td></tr>\n      <tr><td>firstName</td><td>Y</td><td>string</td><td>First name of the individual (required for INDIVIDUAL entity type) 255 char limit<b>Allowed:</b> • Alphanumeric characters • Chinese characters</td></tr>\n      <tr><td>lastName</td><td>Y</td><td>string</td><td>Last name of the individual (required for INDIVIDUAL entity type) 255 char limit<b>Allowed:</b> • Alphanumeric characters • Chinese characters</td></tr>\n      <tr><td>dateOfBirth</td><td>N</td><td>string</td><td>Date of birth of the individual</td></tr>\n      <tr><td>relationshipType</td><td>Y</td><td>string</td><td>Type of the relationship between the BENEFICIARY/ORIGINATOR and the creator of the payment. Possible values - SELF_OWNED, THIRD_PARTY</td></tr>\n      <tr><td>countryCode</td><td>Y</td><td>string</td><td>The<br/>ISO 3166-1-alpha-2 code of the country that the party resides in. Unsupported country code: SAINT_PAY: BY,IR,MM,KP,UA,US,SY,RU,CN,SG<br/>MSB: BY,CU,IR,MM,KP,UA,US,SY,RU,CN,SG,VE,AF</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0009-t01-c07",
+          "parent_table_id": "p0009-t01",
+          "table_role": "child",
+          "section_title": "Individual Party Details (objects of partyDetails)",
+          "child_table_ids": [],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0009-t01-c07",
+            "data-table-role": "child",
+            "data-parent-table-id": "p0009-t01"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 9,
+          "bbox": [
+            83.94,
+            72.06,
+            498.81,
+            743.37
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "type",
+              "Y",
+              "string",
+              "Identifies whether the party detail information belongs to a BENEFICIARY or an ORIGINATOR. Possible values - BENEFICIARY, ORIGINATOR Provide at least one originator AND one beneficiary"
+            ],
+            [
+              "entityType",
+              "Y",
+              "string",
+              "Identifies whether the party detail information belongs to an INDIVIDUAL or a COMPANY\nPossible values - INDIVIDUAL, COMPANY"
+            ],
+            [
+              "userId",
+              "N",
+              "string",
+              "The uuid tied to this beneficiary or originator."
+            ],
+            [
+              "legalName",
+              "Y",
+              "string",
+              "Name of the company (required for COMPANY entity type) 255 char limit\n<b>Allowed:</b> • Alphanumeric characters • Chinese characters"
+            ],
+            [
+              "relationshipType",
+              "Y",
+              "string",
+              "Type of the relationship between the BENEFICIARY/ORIGINATOR and the creator of the payment. Possible values - SELF_OWNED, THIRD_PARTY"
+            ],
+            [
+              "countryCode",
+              "Y",
+              "string",
+              "The\nISO 3166-1-alpha-2 code of the country that the party resides in. Required only if requesterIpAddress is not provided. Unsupported country code: SAINT_PAY: BY,IR,MM,KP,UA,US,SY,RU,CN,SG\nMSB: BY,CU,IR,MM,KP,UA,US,SY,RU,CN,SG,VE,AF"
+            ],
+            [
+              "registrationNumber",
+              "Y",
+              "string",
+              "Legal Entity identifier 255 character limit Alphanumerical Only Special characters not supported (ie: !@#$)"
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "**Company Party Details (objects of partyDetails)**\n\nTable metadata: `data-table-id=p0009-t01-c08` `data-table-role=child` `data-parent-table-id=p0009-t01`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| type | Y | string | Identifies whether the party detail information belongs to a BENEFICIARY or an ORIGINATOR. Possible values - BENEFICIARY, ORIGINATOR Provide at least one originator AND one beneficiary |\n| entityType | Y | string | Identifies whether the party detail information belongs to an INDIVIDUAL or a COMPANY<br/>Possible values - INDIVIDUAL, COMPANY |\n| userId | N | string | The uuid tied to this beneficiary or originator. |\n| legalName | Y | string | Name of the company (required for COMPANY entity type) 255 char limit<b>Allowed:</b> • Alphanumeric characters • Chinese characters |\n| relationshipType | Y | string | Type of the relationship between the BENEFICIARY/ORIGINATOR and the creator of the payment. Possible values - SELF_OWNED, THIRD_PARTY |\n| countryCode | Y | string | The<br/>ISO 3166-1-alpha-2 code of the country that the party resides in. Required only if requesterIpAddress is not provided. Unsupported country code: SAINT_PAY: BY,IR,MM,KP,UA,US,SY,RU,CN,SG<br/>MSB: BY,CU,IR,MM,KP,UA,US,SY,RU,CN,SG,VE,AF |\n| registrationNumber | Y | string | Legal Entity identifier 255 character limit Alphanumerical Only Special characters not supported (ie: !@#$) |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0009-t01-c08\" data-table-role=\"child\" data-parent-table-id=\"p0009-t01\">\n  <p class=\"complex-table-title\"><strong>Company Party Details (objects of partyDetails)</strong></p>\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>type</td><td>Y</td><td>string</td><td>Identifies whether the party detail information belongs to a BENEFICIARY or an ORIGINATOR. Possible values - BENEFICIARY, ORIGINATOR Provide at least one originator AND one beneficiary</td></tr>\n      <tr><td>entityType</td><td>Y</td><td>string</td><td>Identifies whether the party detail information belongs to an INDIVIDUAL or a COMPANY<br/>Possible values - INDIVIDUAL, COMPANY</td></tr>\n      <tr><td>userId</td><td>N</td><td>string</td><td>The uuid tied to this beneficiary or originator.</td></tr>\n      <tr><td>legalName</td><td>Y</td><td>string</td><td>Name of the company (required for COMPANY entity type) 255 char limit<b>Allowed:</b> • Alphanumeric characters • Chinese characters</td></tr>\n      <tr><td>relationshipType</td><td>Y</td><td>string</td><td>Type of the relationship between the BENEFICIARY/ORIGINATOR and the creator of the payment. Possible values - SELF_OWNED, THIRD_PARTY</td></tr>\n      <tr><td>countryCode</td><td>Y</td><td>string</td><td>The<br/>ISO 3166-1-alpha-2 code of the country that the party resides in. Required only if requesterIpAddress is not provided. Unsupported country code: SAINT_PAY: BY,IR,MM,KP,UA,US,SY,RU,CN,SG<br/>MSB: BY,CU,IR,MM,KP,UA,US,SY,RU,CN,SG,VE,AF</td></tr>\n      <tr><td>registrationNumber</td><td>Y</td><td>string</td><td>Legal Entity identifier 255 character limit Alphanumerical Only Special characters not supported (ie: !@#$)</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0009-t01-c08",
+          "parent_table_id": "p0009-t01",
+          "table_role": "child",
+          "section_title": "Company Party Details (objects of partyDetails)",
+          "child_table_ids": [],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0009-t01-c08",
+            "data-table-role": "child",
+            "data-parent-table-id": "p0009-t01"
+          }
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 9,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0009_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 10,
+      "source_page": 10,
+      "is_overlap": false,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [],
+      "tables": [
+        {
+          "type": "table",
+          "source_page": 10,
+          "bbox": [
+            432.45,
+            463.05,
+            479.15,
+            483.05
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "platform",
+            ""
+          ],
+          "rows": [],
+          "markdown": "|platform|Col2|\n|---|---|",
+          "rendered_markdown": null,
+          "fallback_html": null,
+          "fallback_image": null,
+          "table_id": "p0010-t01",
+          "parent_table_id": null,
+          "table_role": "standalone",
+          "section_title": null,
+          "child_table_ids": [],
+          "table_kind": "simple",
+          "render_strategy": "gfm_table",
+          "data_attributes": {
+            "data-table-id": "p0010-t01",
+            "data-table-role": "standalone"
+          }
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 10,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0010_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 11,
+      "source_page": 11,
+      "is_overlap": false,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [],
+      "tables": [],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 11,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0011_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 12,
+      "source_page": 12,
+      "is_overlap": false,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [],
+      "tables": [],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 12,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0012_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 13,
+      "source_page": 13,
+      "is_overlap": false,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [],
+      "tables": [
+        {
+          "type": "table",
+          "source_page": 13,
+          "bbox": [
+            284.3,
+            658.5,
+            408.15,
+            678.5
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "KP,",
+            "UA,",
+            "US,",
+            "SY,",
+            "RU,",
+            "CN",
+            ",SG"
+          ],
+          "rows": [],
+          "markdown": "|KP,|UA,|US,|SY,|RU,|CN|,SG|\n|---|---|---|---|---|---|---|",
+          "rendered_markdown": null,
+          "fallback_html": null,
+          "fallback_image": null,
+          "table_id": "p0013-t01",
+          "parent_table_id": null,
+          "table_role": "standalone",
+          "section_title": null,
+          "child_table_ids": [],
+          "table_kind": "simple",
+          "render_strategy": "gfm_table",
+          "data_attributes": {
+            "data-table-id": "p0013-t01",
+            "data-table-role": "standalone"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 13,
+          "bbox": [
+            281.025,
+            709.7,
+            408.15,
+            729.7
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "MM",
+            ",KP",
+            ",UA",
+            ",US",
+            ",SY",
+            ",RU,",
+            "CN"
+          ],
+          "rows": [],
+          "markdown": "|MM|,KP|,UA|,US|,SY|,RU,|CN|\n|---|---|---|---|---|---|---|",
+          "rendered_markdown": null,
+          "fallback_html": null,
+          "fallback_image": null,
+          "table_id": "p0013-t02",
+          "parent_table_id": null,
+          "table_role": "standalone",
+          "section_title": null,
+          "child_table_ids": [],
+          "table_kind": "simple",
+          "render_strategy": "gfm_table",
+          "data_attributes": {
+            "data-table-id": "p0013-t02",
+            "data-table-role": "standalone"
+          }
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 13,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0013_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 14,
+      "source_page": 14,
+      "is_overlap": false,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [],
+      "tables": [],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 14,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0014_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 15,
+      "source_page": 15,
+      "is_overlap": false,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [],
+      "tables": [],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 15,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0015_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 16,
+      "source_page": 16,
+      "is_overlap": false,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [],
+      "tables": [],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 16,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0016_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 17,
+      "source_page": 17,
+      "is_overlap": false,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [],
+      "tables": [
+        {
+          "type": "table",
+          "source_page": 17,
+          "bbox": [
+            284.3,
+            240.25,
+            408.15,
+            260.25
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "KP,",
+            "UA",
+            ",US,",
+            "SY,",
+            "RU,",
+            "CN,",
+            "SG"
+          ],
+          "rows": [],
+          "markdown": "|KP,|UA|,US,|SY,|RU,|CN,|SG|\n|---|---|---|---|---|---|---|",
+          "rendered_markdown": null,
+          "fallback_html": null,
+          "fallback_image": null,
+          "table_id": "p0017-t01",
+          "parent_table_id": null,
+          "table_role": "standalone",
+          "section_title": null,
+          "child_table_ids": [],
+          "table_kind": "simple",
+          "render_strategy": "gfm_table",
+          "data_attributes": {
+            "data-table-id": "p0017-t01",
+            "data-table-role": "standalone"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 17,
+          "bbox": [
+            281.025,
+            291.45,
+            408.15,
+            311.45
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "MM",
+            ",KP",
+            ",UA",
+            ",US",
+            ",SY,",
+            "RU,",
+            "CN"
+          ],
+          "rows": [],
+          "markdown": "|MM|,KP|,UA|,US|,SY,|RU,|CN|\n|---|---|---|---|---|---|---|",
+          "rendered_markdown": null,
+          "fallback_html": null,
+          "fallback_image": null,
+          "table_id": "p0017-t02",
+          "parent_table_id": null,
+          "table_role": "standalone",
+          "section_title": null,
+          "child_table_ids": [],
+          "table_kind": "simple",
+          "render_strategy": "gfm_table",
+          "data_attributes": {
+            "data-table-id": "p0017-t02",
+            "data-table-role": "standalone"
+          }
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 17,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0017_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 18,
+      "source_page": 18,
+      "is_overlap": false,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Common Error Code:",
+          "source_page": 18,
+          "bbox": [
+            90.0,
+            448.13,
+            201.818,
+            463.445
+          ],
+          "reading_order": 14,
+          "is_overlap": false,
+          "dedupe_key": "18:cdc7bdafe15c:5edc6bd859",
+          "heading_level": null
+        },
+        {
+          "type": "paragraph",
+          "text": "See 5.2.2 Common error code",
+          "source_page": 18,
+          "bbox": [
+            90.0,
+            469.425,
+            237.958,
+            484.11
+          ],
+          "reading_order": 15,
+          "is_overlap": false,
+          "dedupe_key": "18:74ca7dd78620:e9ce2f0682",
+          "heading_level": null
+        },
+        {
+          "type": "paragraph",
+          "text": "Business Error Code:",
+          "source_page": 18,
+          "bbox": [
+            90.0,
+            490.49,
+            203.018,
+            505.805
+          ],
+          "reading_order": 16,
+          "is_overlap": false,
+          "dedupe_key": "18:1831c859c095:9319cbea33",
+          "heading_level": null
+        }
+      ],
+      "tables": [
+        {
+          "type": "table",
+          "source_page": 18,
+          "bbox": [
+            284.3,
+            255.4,
+            408.15,
+            275.4
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "KP,",
+            "UA,",
+            "US,",
+            "SY,",
+            "RU,",
+            "CN",
+            ",SG"
+          ],
+          "rows": [],
+          "markdown": "|KP,|UA,|US,|SY,|RU,|CN|,SG|\n|---|---|---|---|---|---|---|",
+          "rendered_markdown": null,
+          "fallback_html": null,
+          "fallback_image": null,
+          "table_id": "p0018-t01",
+          "parent_table_id": null,
+          "table_role": "standalone",
+          "section_title": null,
+          "child_table_ids": [],
+          "table_kind": "simple",
+          "render_strategy": "gfm_table",
+          "data_attributes": {
+            "data-table-id": "p0018-t01",
+            "data-table-role": "standalone"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 18,
+          "bbox": [
+            281.025,
+            306.6,
+            408.15,
+            326.6
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "MM",
+            ",KP",
+            ",UA",
+            ",US",
+            ",SY",
+            ",RU",
+            ",CN"
+          ],
+          "rows": [],
+          "markdown": "|MM|,KP|,UA|,US|,SY|,RU|,CN|\n|---|---|---|---|---|---|---|",
+          "rendered_markdown": null,
+          "fallback_html": null,
+          "fallback_image": null,
+          "table_id": "p0018-t02",
+          "parent_table_id": null,
+          "table_role": "standalone",
+          "section_title": null,
+          "child_table_ids": [],
+          "table_kind": "simple",
+          "render_strategy": "gfm_table",
+          "data_attributes": {
+            "data-table-id": "p0018-t02",
+            "data-table-role": "standalone"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 18,
+          "bbox": [
+            83.94,
+            512.66,
+            498.81,
+            767.77
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [],
+          "rows": [
+            [
+              "HttpStatusCode",
+              "Response Code",
+              "Description",
+              "Solution"
+            ],
+            [
+              "200",
+              "40000",
+              "Parameter error",
+              "Please modify the parameters as prompted and then resubmit."
+            ],
+            [
+              "200",
+              "40001",
+              "Duplicate Request (IdempotentRejected)",
+              "Please try a new order with a new requestId. Otherwise, return the order corresponding to the current requestId."
+            ],
+            [
+              "200",
+              "40003",
+              "Insufficient balance",
+              "Insufficient balance"
+            ],
+            [
+              "200",
+              "50000",
+              "System error",
+              "Please try again later. Note: You must use the original requestID."
+            ],
+            [
+              "200",
+              "60001",
+              "Status error",
+              "Please check the account status."
+            ],
+            [
+              "200",
+              "60002",
+              "Account does not exist",
+              "Please check the accountId."
+            ]
+          ],
+          "markdown": "",
+          "rendered_markdown": "Table metadata: `data-table-id=p0018-t03` `data-table-role=standalone`\n\n| HttpStatusCode | Response Code | Description | Solution |\n| --- | --- | --- | --- |\n| 200 | 40000 | Parameter error | Please modify the parameters as prompted and then resubmit. |\n| 200 | 40001 | Duplicate Request (IdempotentRejected) | Please try a new order with a new requestId. Otherwise, return the order corresponding to the current requestId. |\n| 200 | 40003 | Insufficient balance | Insufficient balance |\n| 200 | 50000 | System error | Please try again later. Note: You must use the original requestID. |\n| 200 | 60001 | Status error | Please check the account status. |\n| 200 | 60002 | Account does not exist | Please check the accountId. |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0018-t03\" data-table-role=\"standalone\">\n  <table>\n    <tbody>\n      <tr><td>HttpStatusCode</td><td>Response Code</td><td>Description</td><td>Solution</td></tr>\n      <tr><td>200</td><td>40000</td><td>Parameter error</td><td>Please modify the parameters as prompted and then resubmit.</td></tr>\n      <tr><td>200</td><td>40001</td><td>Duplicate Request (IdempotentRejected)</td><td>Please try a new order with a new requestId. Otherwise, return the order corresponding to the current requestId.</td></tr>\n      <tr><td>200</td><td>40003</td><td>Insufficient balance</td><td>Insufficient balance</td></tr>\n      <tr><td>200</td><td>50000</td><td>System error</td><td>Please try again later. Note: You must use the original requestID.</td></tr>\n      <tr><td>200</td><td>60001</td><td>Status error</td><td>Please check the account status.</td></tr>\n      <tr><td>200</td><td>60002</td><td>Account does not exist</td><td>Please check the accountId.</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0018-t03",
+          "parent_table_id": null,
+          "table_role": "standalone",
+          "section_title": null,
+          "child_table_ids": [],
+          "table_kind": "complex",
+          "render_strategy": "gfm_table",
+          "data_attributes": {
+            "data-table-id": "p0018-t03",
+            "data-table-role": "standalone"
+          }
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 18,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0018_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 19,
+      "source_page": 19,
+      "is_overlap": false,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Request Example:",
+          "source_page": 19,
+          "bbox": [
+            90.0,
+            233.929,
+            185.363,
+            249.245
+          ],
+          "reading_order": 5,
+          "is_overlap": false,
+          "dedupe_key": "19:f0b257352cb8:3388073036",
+          "heading_level": null
+        },
+        {
+          "type": "paragraph",
+          "text": "JSON",
+          "source_page": 19,
+          "bbox": [
+            90.0,
+            268.53,
+            119.02,
+            281.393
+          ],
+          "reading_order": 6,
+          "is_overlap": false,
+          "dedupe_key": "19:031a4e76f0b3:d8f8a792c3",
+          "heading_level": null
+        },
+        {
+          "type": "paragraph",
+          "text": "{",
+          "source_page": 19,
+          "bbox": [
+            90.0,
+            292.53,
+            93.68,
+            305.393
+          ],
+          "reading_order": 7,
+          "is_overlap": false,
+          "dedupe_key": "19:60ba4b2daa4e:63fea2c624",
+          "heading_level": null
+        },
+        {
+          "type": "code",
+          "text": "\"requestId\": \"REQ_20251025_2100002\",\n\"accountId\": 176490205360000,\n\"beneficiaryType\": \"SELF_OWNED\",\n\"purpose\": \"OTHERS\",\n\"payCurrency\": \"USDC\",\n\"settleCurrency\": \"USDC\",\n\"payAmount\": \"10.131\",\n\"timeUnit\": \"M\",\n\"lockTime\": \"5\",\n\"memo\":\"test payout\",\n\"partyDetails\": [\n{\n\"type\": \"ORIGINATOR\",\n\"entityType\": \"COMPANY\",\n\"relationshipType\": \"SELF_OWNED\",\n\"legalName\": \"TrustPay\",\n\"countryCode\": \"HK\",\n\"registrationNumber\": \"1231231231003\",\n\"address\": \"123 Main St\"\n},\n{\n\"type\": \"BENEFICIARY\",\n\"entityType\": \"COMPANY\",\n\"relationshipType\": \"SELF_OWNED\",\n\"legalName\": \"TrustPay\",\n\"countryCode\": \"HK\",\n\"registrationNumber\": \"1231231231003\",\n\"address\": \"123 Main St\"\n}\n],\n\"cryptoAddressInfo\": [{\n\"supportCurrency\": [\"USDC\"],\n\"address\": \"0x32539Cb22334c875f150D89Dfcb5CbBB99AD9E3a\",\n\"memo\": \"123456\",\n\"network\": \"ERC20\"\n}]\n}",
+          "source_page": 19,
+          "bbox": [
+            104.64,
+            316.53,
+            463.138,
+            737.873
+          ],
+          "reading_order": 8,
+          "is_overlap": false,
+          "dedupe_key": "19:5888d286ea15:a08f13d89b",
+          "heading_level": null
+        }
+      ],
+      "tables": [],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 19,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0019_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 20,
+      "source_page": 20,
+      "is_overlap": false,
+      "markdown": "",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Response Example:",
+          "source_page": 20,
+          "bbox": [
+            90.0,
+            544.608,
+            194.482,
+            559.924
+          ],
+          "reading_order": 20,
+          "is_overlap": false,
+          "dedupe_key": "20:afe3ce61fa52:02427bcf62",
+          "heading_level": null
+        },
+        {
+          "type": "paragraph",
+          "text": "JSON",
+          "source_page": 20,
+          "bbox": [
+            90.0,
+            579.33,
+            119.02,
+            592.193
+          ],
+          "reading_order": 21,
+          "is_overlap": false,
+          "dedupe_key": "20:031a4e76f0b3:48e0490f54",
+          "heading_level": null
+        },
+        {
+          "type": "paragraph",
+          "text": "{",
+          "source_page": 20,
+          "bbox": [
+            90.0,
+            603.33,
+            93.68,
+            616.193
+          ],
+          "reading_order": 22,
+          "is_overlap": false,
+          "dedupe_key": "20:60ba4b2daa4e:d61dcd5693",
+          "heading_level": null
+        },
+        {
+          "type": "code",
+          "text": "\"code\": \"200\",\n\"msg\": \"OK\",\n\"data\": {\n\"requestId\": \"REQ_20251025_2100002\",\n\"orderId\": \"1mzo4xbfqoeb7-1764745536475\",\n\"accountId\": \"176490205360000\",\n\"orderType\": \"CRYPTO_TO_CRYPTO_PAYOUT\",\n\"status\": \"CREATED\",\n\"purpose\": \"OTHERS\",\n\"payCurrency\": \"USDC\",\n\"settleCurrency\": \"USDC\",\n\"payMode\": \"PAYER_BEAR\",\n\"payAmount\": \"10.131\",\n\"totalAmount\": \"13.131\",\n\"settleAmount\": \"10.131\",\n\"receiveAmount\": \"10.131\",\n\"partyDetails\": [\n{\n\"type\": \"ORIGINATOR\",\n\"entityType\": \"COMPANY\",\n\"address\": \"123 Main St\",\n\"relationshipType\": \"SELF_OWNED\",\n\"countryCode\": \"HK\",\n\"legalName\": \"TrustPay\",\n\"registrationNumber\": \"1231231231003\"\n},\n{\n\"type\": \"BENEFICIARY\",\n\"entityType\": \"COMPANY\",\n\"address\": \"123 Main St\",\n\"relationshipType\": \"SELF_OWNED\",\n\"countryCode\": \"HK\",\n\"legalName\": \"TrustPay\",\n\"registrationNumber\": \"1231231231003\"\n}\n],\n\"cryptoAddressInfo\": [\n{\n\"address\":\n\"0x32539Cb22334c875f150D89Dfcb5CbBB99AD9E3a\",\n\"memo\": \"123456\",\n\"network\": \"ERC20\",\n\"supportCurrency\": [\n\"USDC\"\n]\n}\n],\n\"fees\": [\n{\n\"feePurpose\": \"PLAT_COIN_PAYOUT\",\n\"amount\": \"0.50655\",\n\"currency\": \"USDC\",\n\"deductReal\": false\n},\n{\n\"feePurpose\": \"CHANNEL_COIN_PAYOUT\",\n\"amount\": \"3\",\n\"currency\": \"USDC\",\n\"deductReal\": true\n}\n],\n\"createTime\": \"2025-12-03T07:05:36Z\",\n\"memo\": \"test payout\"\n}\n}",
+          "source_page": 20,
+          "bbox": [
+            104.64,
+            627.33,
+            369.984,
+            760.312
+          ],
+          "reading_order": 23,
+          "is_overlap": false,
+          "dedupe_key": "20:0080b8a34247:20fce0a5c3",
+          "heading_level": null
+        }
+      ],
+      "tables": [],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 20,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0020_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 21,
+      "source_page": 21,
+      "is_overlap": false,
+      "markdown": "",
+      "blocks": [],
+      "tables": [],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 21,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0021_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 22,
+      "source_page": 22,
+      "is_overlap": false,
+      "markdown": "",
+      "blocks": [],
+      "tables": [],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 22,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0022_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    },
+    {
+      "slice_page": 23,
+      "source_page": 23,
+      "is_overlap": true,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [
+        {
+          "type": "heading",
+          "text": "8.8.2 Confirm Order",
+          "source_page": 23,
+          "bbox": [
+            90.0,
+            168.98,
+            229.964,
+            189.77
+          ],
+          "reading_order": 4,
+          "is_overlap": true,
+          "dedupe_key": "23:48c32b9d1b39:cc4fc3cbcb",
+          "heading_level": 3
+        },
+        {
+          "type": "paragraph",
+          "text": "Endpoint:",
+          "source_page": 23,
+          "bbox": [
+            90.0,
+            195.889,
+            141.328,
+            211.205
+          ],
+          "reading_order": 5,
+          "is_overlap": true,
+          "dedupe_key": "23:956071b463f9:7dabecb59f",
+          "heading_level": null
+        },
+        {
+          "type": "paragraph",
+          "text": "Request Parameters:",
+          "source_page": 23,
+          "bbox": [
+            90.0,
+            247.13,
+            200.046,
+            262.445
+          ],
+          "reading_order": 7,
+          "is_overlap": true,
+          "dedupe_key": "23:91db7b2f6a33:8358552a81",
+          "heading_level": null
+        }
+      ],
+      "tables": [
+        {
+          "type": "table",
+          "source_page": 23,
+          "bbox": [
+            90.0,
+            217.9,
+            329.7,
+            237.9
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [],
+          "rows": [
+            [
+              "POST",
+              "",
+              "/payfi/v1/merchant-api/confirm-payout"
+            ]
+          ],
+          "markdown": "|POST|Col2|/payfi/v1/merchant-api/confirm-payout|\n|---|---|---|",
+          "rendered_markdown": null,
+          "fallback_html": null,
+          "fallback_image": null,
+          "table_id": "p0023-t01",
+          "parent_table_id": null,
+          "table_role": "standalone",
+          "section_title": null,
+          "child_table_ids": [],
+          "table_kind": "simple",
+          "render_strategy": "gfm_table",
+          "data_attributes": {
+            "data-table-id": "p0023-t01",
+            "data-table-role": "standalone"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 23,
+          "bbox": [
+            83.952,
+            269.21,
+            498.358,
+            762.13
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "orderId",
+              "Y",
+              "string",
+              "The id of the order"
+            ],
+            [
+              "partyDetails",
+              "C",
+              "Array of objects",
+              "The participant details arrays of the order, provide at least one originator AND one beneficiary. This must be provided if it has not been provided during payout creation If this is already provided during payout creation, providing this again will replace the previous entry"
+            ],
+            [
+              "<s>cryptoMethod</s><br/>cryptoAddressInfo",
+              "C",
+              "Array of objects",
+              "Mandatory if settleCurrency = Crypto This must be provided if it has not been provided during payout creation If this is already provided during payout creation, providing this again will replace the previous entry"
+            ],
+            [
+              "<s>fiatMethod</s><br/>fiatAccountInfo",
+              "C",
+              "object",
+              "Mandatory if settleCurrency = Fiat This must be provided if it has not been provided during payout creation If this is already provided during payout creation, providing this again will replace the previous entry"
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "Table metadata: `data-table-id=p0023-t02` `data-table-role=parent` `data-child-table-ids=p0023-t02-c01`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| orderId | Y | string | The id of the order |\n| partyDetails | C | Array of objects | The participant details arrays of the order, provide at least one originator AND one beneficiary. This must be provided if it has not been provided during payout creation If this is already provided during payout creation, providing this again will replace the previous entry |\n| <s>cryptoMethod</s><br/>cryptoAddressInfo | C | Array of objects | Mandatory if settleCurrency = Crypto This must be provided if it has not been provided during payout creation If this is already provided during payout creation, providing this again will replace the previous entry |\n| <s>fiatMethod</s><br/>fiatAccountInfo | C | object | Mandatory if settleCurrency = Fiat This must be provided if it has not been provided during payout creation If this is already provided during payout creation, providing this again will replace the previous entry |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0023-t02\" data-table-role=\"parent\" data-child-table-ids=\"p0023-t02-c01\">\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>orderId</td><td>Y</td><td>string</td><td>The id of the order</td></tr>\n      <tr><td>partyDetails</td><td>C</td><td>Array of objects</td><td>The participant details arrays of the order, provide at least one originator AND one beneficiary. This must be provided if it has not been provided during payout creation If this is already provided during payout creation, providing this again will replace the previous entry</td></tr>\n      <tr><td><s>cryptoMethod</s><br/>cryptoAddressInfo</td><td>C</td><td>Array of objects</td><td>Mandatory if settleCurrency = Crypto This must be provided if it has not been provided during payout creation If this is already provided during payout creation, providing this again will replace the previous entry</td></tr>\n      <tr><td><s>fiatMethod</s><br/>fiatAccountInfo</td><td>C</td><td>object</td><td>Mandatory if settleCurrency = Fiat This must be provided if it has not been provided during payout creation If this is already provided during payout creation, providing this again will replace the previous entry</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0023-t02",
+          "parent_table_id": null,
+          "table_role": "parent",
+          "section_title": null,
+          "child_table_ids": [
+            "p0023-t02-c01"
+          ],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0023-t02",
+            "data-table-role": "parent",
+            "data-child-table-ids": "p0023-t02-c01"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 23,
+          "bbox": [
+            83.952,
+            269.21,
+            498.358,
+            762.13
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "address",
+              "Y",
+              "string",
+              "Destination address. NOTE: IF NOT PROVIDED, MUST PROVIDE IN CONFIRM STEP"
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "**Params of cryptoAddress (objects of cryptoAddressInfo)**\n\nTable metadata: `data-table-id=p0023-t02-c01` `data-table-role=child` `data-parent-table-id=p0023-t02`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| address | Y | string | Destination address. NOTE: IF NOT PROVIDED, MUST PROVIDE IN CONFIRM STEP |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0023-t02-c01\" data-table-role=\"child\" data-parent-table-id=\"p0023-t02\">\n  <p class=\"complex-table-title\"><strong>Params of cryptoAddress (objects of cryptoAddressInfo)</strong></p>\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>address</td><td>Y</td><td>string</td><td>Destination address. NOTE: IF NOT PROVIDED, MUST PROVIDE IN CONFIRM STEP</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0023-t02-c01",
+          "parent_table_id": "p0023-t02",
+          "table_role": "child",
+          "section_title": "Params of cryptoAddress (objects of cryptoAddressInfo)",
+          "child_table_ids": [],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0023-t02-c01",
+            "data-table-role": "child",
+            "data-parent-table-id": "p0023-t02"
+          }
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 23,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0023_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    }
+  ],
+  "document_outline": [
+    {
+      "section_id": "sec-1",
+      "title": "8.8 Payout Order API",
+      "level": 2,
+      "source_page": 1,
+      "parent_id": null
+    },
+    {
+      "section_id": "sec-1.1",
+      "title": "8.8.1 Create Payout Order",
+      "level": 3,
+      "source_page": 1,
+      "parent_id": "sec-1"
+    },
+    {
+      "section_id": "sec-1.2",
+      "title": "8.8.2 Confirm Order",
+      "level": 3,
+      "source_page": 23,
+      "parent_id": "sec-1"
+    }
+  ],
+  "assets": [
+    {
+      "asset_path": "assets/p0001_img01.jpeg",
+      "source_page": 1,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0002_img01.jpeg",
+      "source_page": 2,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0003_img01.jpeg",
+      "source_page": 3,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0004_img01.jpeg",
+      "source_page": 4,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0005_img01.jpeg",
+      "source_page": 5,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0006_img01.jpeg",
+      "source_page": 6,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0007_img01.jpeg",
+      "source_page": 7,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0008_img01.jpeg",
+      "source_page": 8,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0009_img01.jpeg",
+      "source_page": 9,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0010_img01.jpeg",
+      "source_page": 10,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0011_img01.jpeg",
+      "source_page": 11,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0012_img01.jpeg",
+      "source_page": 12,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0013_img01.jpeg",
+      "source_page": 13,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0014_img01.jpeg",
+      "source_page": 14,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0015_img01.jpeg",
+      "source_page": 15,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0016_img01.jpeg",
+      "source_page": 16,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0017_img01.jpeg",
+      "source_page": 17,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0018_img01.jpeg",
+      "source_page": 18,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0019_img01.jpeg",
+      "source_page": 19,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0020_img01.jpeg",
+      "source_page": 20,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0021_img01.jpeg",
+      "source_page": 21,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0022_img01.jpeg",
+      "source_page": 22,
+      "type": "image"
+    },
+    {
+      "asset_path": "assets/p0023_img01.jpeg",
+      "source_page": 23,
+      "type": "image"
+    }
+  ],
+  "stats": {
+    "char_count": 1119,
+    "table_count": 29,
+    "image_count": 23
+  },
+  "warnings": [
+    "image_caption_unbound:1:assets/p0001_img01.jpeg",
+    "empty_markdown_page:1",
+    "page_content_mismatch:1",
+    "suppressed_broken_table_markdown:2:1",
+    "complex_table:2:1",
+    "image_caption_unbound:2:assets/p0002_img01.jpeg",
+    "table_render_fallback:2:7",
+    "suppressed_broken_table_markdown:3:1",
+    "image_caption_unbound:3:assets/p0003_img01.jpeg",
+    "suppressed_broken_table_markdown:4:1",
+    "image_caption_unbound:4:assets/p0004_img01.jpeg",
+    "suppressed_broken_table_markdown:5:1",
+    "image_caption_unbound:5:assets/p0005_img01.jpeg",
+    "suppressed_broken_table_markdown:6:1",
+    "image_caption_unbound:6:assets/p0006_img01.jpeg",
+    "suppressed_broken_table_markdown:7:1",
+    "image_caption_unbound:7:assets/p0007_img01.jpeg",
+    "suppressed_broken_table_markdown:8:1",
+    "image_caption_unbound:8:assets/p0008_img01.jpeg",
+    "suppressed_broken_table_markdown:9:1",
+    "complex_table:9:1",
+    "image_caption_unbound:9:assets/p0009_img01.jpeg",
+    "table_render_fallback:9:9",
+    "suppressed_broken_table_markdown:10:1",
+    "image_caption_unbound:10:assets/p0010_img01.jpeg",
+    "suppressed_broken_table_markdown:11:1",
+    "image_caption_unbound:11:assets/p0011_img01.jpeg",
+    "suppressed_broken_table_markdown:12:1",
+    "image_caption_unbound:12:assets/p0012_img01.jpeg",
+    "suppressed_broken_table_markdown:13:1",
+    "image_caption_unbound:13:assets/p0013_img01.jpeg",
+    "suppressed_broken_table_markdown:14:1",
+    "image_caption_unbound:14:assets/p0014_img01.jpeg",
+    "suppressed_broken_table_markdown:15:1",
+    "image_caption_unbound:15:assets/p0015_img01.jpeg",
+    "suppressed_broken_table_markdown:16:1",
+    "image_caption_unbound:16:assets/p0016_img01.jpeg",
+    "suppressed_broken_table_markdown:17:1",
+    "image_caption_unbound:17:assets/p0017_img01.jpeg",
+    "suppressed_broken_table_markdown:18:2",
+    "complex_table:18:3",
+    "image_caption_unbound:18:assets/p0018_img01.jpeg",
+    "table_render_fallback:18:1",
+    "suppressed_broken_table_markdown:19:1",
+    "image_caption_unbound:19:assets/p0019_img01.jpeg",
+    "page_content_mismatch:19",
+    "image_caption_unbound:20:assets/p0020_img01.jpeg",
+    "empty_markdown_page:20",
+    "page_content_mismatch:20",
+    "image_caption_unbound:21:assets/p0021_img01.jpeg",
+    "empty_markdown_page:21",
+    "page_content_mismatch:21",
+    "image_caption_unbound:22:assets/p0022_img01.jpeg",
+    "empty_markdown_page:22",
+    "page_content_mismatch:22",
+    "suppressed_broken_table_markdown:23:1",
+    "complex_table:23:2",
+    "image_caption_unbound:23:assets/p0023_img01.jpeg",
+    "table_render_fallback:23:2"
+  ],
+  "manual_review_required": true
+}

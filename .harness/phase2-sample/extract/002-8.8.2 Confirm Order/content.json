@@ -1,0 +1,294 @@
+{
+  "slice_file": "8.8.2 Confirm Order（23-23）.pdf",
+  "display_title": "8.8.2 Confirm Order",
+  "start_page": 23,
+  "end_page": 23,
+  "source_pages": [
+    {
+      "slice_page": 1,
+      "source_page": 23,
+      "is_overlap": true,
+      "markdown": "[复杂表格 Markdown 已回退，请以 content.json / table metadata 为准]",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "\"memo\": \"test payout\"",
+          "source_page": 23,
+          "bbox": [
+            119.28,
+            78.689,
+            233.677,
+            91.552
+          ],
+          "reading_order": 1,
+          "is_overlap": true,
+          "dedupe_key": "23:b7eab693cd87:6ae3dc0b4b",
+          "heading_level": null
+        },
+        {
+          "type": "paragraph",
+          "text": "}",
+          "source_page": 23,
+          "bbox": [
+            104.64,
+            102.689,
+            108.32,
+            115.552
+          ],
+          "reading_order": 2,
+          "is_overlap": true,
+          "dedupe_key": "23:c2b7df6201fd:b8f17b913d",
+          "heading_level": null
+        },
+        {
+          "type": "paragraph",
+          "text": "}",
+          "source_page": 23,
+          "bbox": [
+            90.0,
+            126.689,
+            93.68,
+            139.552
+          ],
+          "reading_order": 3,
+          "is_overlap": true,
+          "dedupe_key": "23:c2b7df6201fd:ccffeee2b2",
+          "heading_level": null
+        },
+        {
+          "type": "heading",
+          "text": "8.8.2 Confirm Order",
+          "source_page": 23,
+          "bbox": [
+            90.0,
+            168.98,
+            229.964,
+            189.77
+          ],
+          "reading_order": 4,
+          "is_overlap": true,
+          "dedupe_key": "23:48c32b9d1b39:cc4fc3cbcb",
+          "heading_level": 3
+        },
+        {
+          "type": "paragraph",
+          "text": "Endpoint:",
+          "source_page": 23,
+          "bbox": [
+            90.0,
+            195.889,
+            141.328,
+            211.205
+          ],
+          "reading_order": 5,
+          "is_overlap": true,
+          "dedupe_key": "23:956071b463f9:7dabecb59f",
+          "heading_level": null
+        },
+        {
+          "type": "paragraph",
+          "text": "Request Parameters:",
+          "source_page": 23,
+          "bbox": [
+            90.0,
+            247.13,
+            200.046,
+            262.445
+          ],
+          "reading_order": 7,
+          "is_overlap": true,
+          "dedupe_key": "23:91db7b2f6a33:8358552a81",
+          "heading_level": null
+        }
+      ],
+      "tables": [
+        {
+          "type": "table",
+          "source_page": 23,
+          "bbox": [
+            90.0,
+            217.9,
+            329.7,
+            237.9
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [],
+          "rows": [
+            [
+              "POST",
+              "",
+              "/payfi/v1/merchant-api/confirm-payout"
+            ]
+          ],
+          "markdown": "|POST|Col2|/payfi/v1/merchant-api/confirm-payout|\n|---|---|---|",
+          "rendered_markdown": null,
+          "fallback_html": null,
+          "fallback_image": null,
+          "table_id": "p0023-t01",
+          "parent_table_id": null,
+          "table_role": "standalone",
+          "section_title": null,
+          "child_table_ids": [],
+          "table_kind": "simple",
+          "render_strategy": "gfm_table",
+          "data_attributes": {
+            "data-table-id": "p0023-t01",
+            "data-table-role": "standalone"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 23,
+          "bbox": [
+            83.952,
+            269.21,
+            498.358,
+            762.13
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "orderId",
+              "Y",
+              "string",
+              "The id of the order"
+            ],
+            [
+              "partyDetails",
+              "C",
+              "Array of objects",
+              "The participant details arrays of the order, provide at least one originator AND one beneficiary. This must be provided if it has not been provided during payout creation If this is already provided during payout creation, providing this again will replace the previous entry"
+            ],
+            [
+              "<s>cryptoMethod</s><br/>cryptoAddressInfo",
+              "C",
+              "Array of objects",
+              "Mandatory if settleCurrency = Crypto This must be provided if it has not been provided during payout creation If this is already provided during payout creation, providing this again will replace the previous entry"
+            ],
+            [
+              "<s>fiatMethod</s><br/>fiatAccountInfo",
+              "C",
+              "object",
+              "Mandatory if settleCurrency = Fiat This must be provided if it has not been provided during payout creation If this is already provided during payout creation, providing this again will replace the previous entry"
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "Table metadata: `data-table-id=p0023-t02` `data-table-role=parent` `data-child-table-ids=p0023-t02-c01`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| orderId | Y | string | The id of the order |\n| partyDetails | C | Array of objects | The participant details arrays of the order, provide at least one originator AND one beneficiary. This must be provided if it has not been provided during payout creation If this is already provided during payout creation, providing this again will replace the previous entry |\n| <s>cryptoMethod</s><br/>cryptoAddressInfo | C | Array of objects | Mandatory if settleCurrency = Crypto This must be provided if it has not been provided during payout creation If this is already provided during payout creation, providing this again will replace the previous entry |\n| <s>fiatMethod</s><br/>fiatAccountInfo | C | object | Mandatory if settleCurrency = Fiat This must be provided if it has not been provided during payout creation If this is already provided during payout creation, providing this again will replace the previous entry |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0023-t02\" data-table-role=\"parent\" data-child-table-ids=\"p0023-t02-c01\">\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>orderId</td><td>Y</td><td>string</td><td>The id of the order</td></tr>\n      <tr><td>partyDetails</td><td>C</td><td>Array of objects</td><td>The participant details arrays of the order, provide at least one originator AND one beneficiary. This must be provided if it has not been provided during payout creation If this is already provided during payout creation, providing this again will replace the previous entry</td></tr>\n      <tr><td><s>cryptoMethod</s><br/>cryptoAddressInfo</td><td>C</td><td>Array of objects</td><td>Mandatory if settleCurrency = Crypto This must be provided if it has not been provided during payout creation If this is already provided during payout creation, providing this again will replace the previous entry</td></tr>\n      <tr><td><s>fiatMethod</s><br/>fiatAccountInfo</td><td>C</td><td>object</td><td>Mandatory if settleCurrency = Fiat This must be provided if it has not been provided during payout creation If this is already provided during payout creation, providing this again will replace the previous entry</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0023-t02",
+          "parent_table_id": null,
+          "table_role": "parent",
+          "section_title": null,
+          "child_table_ids": [
+            "p0023-t02-c01"
+          ],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0023-t02",
+            "data-table-role": "parent",
+            "data-child-table-ids": "p0023-t02-c01"
+          }
+        },
+        {
+          "type": "table",
+          "source_page": 23,
+          "bbox": [
+            83.952,
+            269.21,
+            498.358,
+            762.13
+          ],
+          "table_strategy_used": "lines_strict",
+          "table_fallback_used": false,
+          "table_retry_pages": [],
+          "headers": [
+            "Field",
+            "Required",
+            "Type",
+            "Description"
+          ],
+          "rows": [
+            [
+              "address",
+              "Y",
+              "string",
+              "Destination address. NOTE: IF NOT PROVIDED, MUST PROVIDE IN CONFIRM STEP"
+            ]
+          ],
+          "markdown": null,
+          "rendered_markdown": "**Params of cryptoAddress (objects of cryptoAddressInfo)**\n\nTable metadata: `data-table-id=p0023-t02-c01` `data-table-role=child` `data-parent-table-id=p0023-t02`\n\n| Field | Required | Type | Description |\n| --- | --- | --- | --- |\n| address | Y | string | Destination address. NOTE: IF NOT PROVIDED, MUST PROVIDE IN CONFIRM STEP |",
+          "fallback_html": "<div class=\"complex-table-block\" data-table-id=\"p0023-t02-c01\" data-table-role=\"child\" data-parent-table-id=\"p0023-t02\">\n  <p class=\"complex-table-title\"><strong>Params of cryptoAddress (objects of cryptoAddressInfo)</strong></p>\n  <table>\n    <thead>\n      <tr><th>Field</th><th>Required</th><th>Type</th><th>Description</th></tr>\n    </thead>\n    <tbody>\n      <tr><td>address</td><td>Y</td><td>string</td><td>Destination address. NOTE: IF NOT PROVIDED, MUST PROVIDE IN CONFIRM STEP</td></tr>\n    </tbody>\n  </table>\n</div>",
+          "fallback_image": null,
+          "table_id": "p0023-t02-c01",
+          "parent_table_id": "p0023-t02",
+          "table_role": "child",
+          "section_title": "Params of cryptoAddress (objects of cryptoAddressInfo)",
+          "child_table_ids": [],
+          "table_kind": "nested",
+          "render_strategy": "nested_sections",
+          "data_attributes": {
+            "data-table-id": "p0023-t02-c01",
+            "data-table-role": "child",
+            "data-parent-table-id": "p0023-t02"
+          }
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "source_page": 23,
+          "bbox": [
+            90.6,
+            72.24,
+            504.6,
+            769.8
+          ],
+          "asset_path": "assets/p0023_img01.jpeg",
+          "width": 640,
+          "height": 960,
+          "caption": null
+        }
+      ]
+    }
+  ],
+  "document_outline": [
+    {
+      "section_id": "sec-1",
+      "title": "8.8.2 Confirm Order",
+      "level": 3,
+      "source_page": 23,
+      "parent_id": null
+    }
+  ],
+  "assets": [
+    {
+      "asset_path": "assets/p0023_img01.jpeg",
+      "source_page": 23,
+      "type": "image"
+    }
+  ],
+  "stats": {
+    "char_count": 55,
+    "table_count": 3,
+    "image_count": 1
+  },
+  "warnings": [
+    "suppressed_broken_table_markdown:23:1",
+    "complex_table:23:2",
+    "image_caption_unbound:23:assets/p0023_img01.jpeg",
+    "table_render_fallback:23:2"
+  ],
+  "manual_review_required": true
+}

@@ -1,0 +1,39 @@
+{
+  "source_file": "source.pdf",
+  "total_pages": 23,
+  "created_at": "2026-04-03T06:02:43.776327+00:00",
+  "generator_version": "phase1-v1",
+  "fallback_level": 2,
+  "slices": [
+    {
+      "slice_file": "前言（1-23）.pdf",
+      "start_page": 1,
+      "end_page": 23,
+      "actual_pages": 23,
+      "display_title": "前言",
+      "toc_level": 1,
+      "split_mode": "chapter",
+      "overlap_pages": [
+        23
+      ],
+      "boundary_reason": "chapter_boundary",
+      "exception_type": null,
+      "manual_review_required": false
+    },
+    {
+      "slice_file": "8.8.2 Confirm Order（23-23）.pdf",
+      "start_page": 23,
+      "end_page": 23,
+      "actual_pages": 1,
+      "display_title": "8.8.2 Confirm Order",
+      "toc_level": 1,
+      "split_mode": "chapter",
+      "overlap_pages": [
+        23
+      ],
+      "boundary_reason": "chapter_boundary",
+      "exception_type": null,
+      "manual_review_required": false
+    }
+  ]
+}
